@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Calendar, Clock, Building2, Mail, Target, Phone, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://trabalho-agendamento-ensaios.onrender.com/api';
 
 interface OcupacaoMes {
   data: string; // Formato 'YYYY-MM-DD'
