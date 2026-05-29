@@ -29,7 +29,7 @@ export default function ClienteLayout() {
   const [mesAtual, setMesAtual] = useState<Date>(new Date());
   const [agendaMes, setAgendaMes] = useState<OcupacaoMes[]>([]);
 
-  // 1. Mapeia a disponibilidade de todos os dias do mês atual ao trocar de mês
+// 1. Mapeia a disponibilidade de todos os dias do mês atual ao trocar de mês
   useEffect(() => {
     const mapearDisponibilidadeDoMes = async () => {
       const ano = mesAtual.getFullYear();
@@ -61,6 +61,24 @@ export default function ClienteLayout() {
 
     mapearDisponibilidadeDoMes();
   }, [mesAtual]);
+
+  // 2. Busca horários específicos de um dia selecionado (CORRIGIDO)
+  useEffect(() => {
+    // Validação flexível que aceita qualquer ano válido no formato YYYY-MM-DD
+    if (formData.data_ensaio && formData.data_ensaio.length === 10) {
+      setCarregandoHorarios(true);
+      
+      axios.get(`${API_URL}/agenda/disponibilidade?data=${formData.data_ensaio}`)
+        .then((res) => {
+          setDisponibilidade(res.data);
+        })
+        .catch((err) => {
+          console.error("Erro na requisição:", err);
+          alert('Erro ao consultar horários. Verifique se o Backend está ligado!');
+        })
+        .finally(() => setCarregandoHorarios(false));
+    }
+  }, [formData.data_ensaio]); // Monitora estritamente a mudança da data escolhida
 
   // 2. Busca horários específicos de um dia selecionado
   useEffect(() => {
