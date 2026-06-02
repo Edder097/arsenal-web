@@ -163,25 +163,28 @@ export default function FilmmakerPainel() {
   const roteiristasDisponiveis = equipe.filter(m => m.eh_roteirista === true);
   const auxiliaresDisponiveis = equipe.filter(m => m.eh_auxiliar === true);
 
-  // LÓGICA DE FILTRAGEM ATUALIZADA (Une profissional + status da aba)
-  const ensaiosFiltrados = ensaios.filter(ensaio => {
-    const atendeProfissional = !filtroProfissional || (
-      ensaio.fotografo_responsavel === filtroProfissional ||
-      ensaio.roteirista_responsavel === filtroProfissional ||
-      ensaio.auxiliar_responsavel === filtroProfissional
-    );
+// LÓGICA DE FILTRAGEM ATUALIZADA (Blindada contra Case Sensitivity)
+  const ensaiosFiltrados = ensaios.filter(ensaio => {
+    const atendeProfissional = !filtroProfissional || (
+      ensaio.fotografo_responsavel === filtroProfissional ||
+      ensaio.roteirista_responsavel === filtroProfissional ||
+      ensaio.auxiliar_responsavel === filtroProfissional
+    );
 
-    let atendeStatus = true;
-    if (filtroStatus === 'pendente') {
-      atendeStatus = ensaio.status !== 'Concluído' && ensaio.status !== 'Cancelado';
-    } else if (filtroStatus === 'concluido') {
-      atendeStatus = ensaio.status === 'Concluído';
-    } else if (filtroStatus === 'cancelado') {
-      atendeStatus = ensaio.status === 'Cancelado';
-    }
+    // Padroniza o status para evitar bugs de ('Cancelado' vs 'cancelado')
+    const statusNormalizado = (ensaio.status || '').trim().toLowerCase();
 
-    return atendeProfissional && atendeStatus;
-  });
+    let atendeStatus = true;
+    if (filtroStatus === 'pendente') {
+      atendeStatus = statusNormalizado !== 'concluído' && statusNormalizado !== 'concluido' && statusNormalizado !== 'cancelado';
+    } else if (filtroStatus === 'concluido') {
+      atendeStatus = statusNormalizado === 'concluído' || statusNormalizado === 'concluido';
+    } else if (filtroStatus === 'cancelado') {
+      atendeStatus = statusNormalizado === 'cancelado';
+    }
+
+    return atendeProfissional && atendeStatus;
+  });
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 font-sans">
