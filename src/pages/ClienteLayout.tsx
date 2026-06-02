@@ -133,6 +133,12 @@ export default function ClienteLayout() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6 text-white">
         <div className="max-w-md w-full bg-slate-900 border border-[#0ABAB5]/30 p-8 rounded-2xl text-center shadow-xl">
+          
+          {/* Logo na tela de sucesso também */}
+          <div className="flex justify-center mb-4">
+            <img src="/Arsenal.png" alt="Logo" className="h-10 w-auto object-contain" />
+          </div>
+
           <CheckCircle className="w-16 h-16 mx-auto text-[#0ABAB5] mb-4" />
           <h2 className="text-2xl font-bold mb-2">Seu ensaio foi agendado com sucesso!</h2>
           <p className="text-slate-400 text-sm mb-6">
@@ -152,15 +158,18 @@ export default function ClienteLayout() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
       <div className="max-w-xl w-full bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl">
         
-        {/* 🏢 ESPAÇO PARA A LOGOMARCA DA EMPRESA */}
+        {/* 🖼️ LOGOMARCA EM PNG (Puxa direto da pasta public/logo.png) */}
         <div className="flex justify-center mb-6">
-          {/* Se tiver o arquivo da logo, basta descomentar a linha abaixo e passar o caminho correto */}
-          {/* <img src="/logo.png" alt="Logo Arsenal" className="h-12 w-auto object-contain" /> */}
-          
-          {/* Placeholder visual elegante enquanto você não coloca a imagem da logo */}
-          <div className="px-6 py-2 border-2 border-dashed border-slate-800 rounded-xl flex items-center justify-center bg-slate-950 text-xs font-semibold text-slate-500 tracking-wider uppercase">
-            [ Espaço para Logomarca ]
-          </div>
+          <img 
+            src="/Arsenal.png" 
+            alt="Logo Arsenal" 
+            className="h-14 w-auto object-contain"
+            onError={(e) => {
+              // Se o arquivo sumir ou der erro de path, mostra um texto discreto para não quebrar o layout
+              e.currentTarget.style.display = 'none';
+              console.warn("Coloque o arquivo logo.png dentro da pasta public do seu projeto.");
+            }}
+          />
         </div>
 
         {/* Cabeçalho */}
@@ -170,7 +179,7 @@ export default function ClienteLayout() {
           </h1>
           <p className="text-sm text-slate-400 mt-2">Olá, cliente da Arsenal! Siga o passo a passo para agendar seu ensaio:</p>
           
-          {/* Barra de Progresso em Azul Tiffany */}
+          {/* Barra de Progresso */}
           <div className="flex gap-2 justify-center mt-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className={`h-1.5 w-10 rounded-full transition-all duration-300 ${passo >= i ? 'bg-[#0ABAB5]' : 'bg-slate-800'}`} />
@@ -214,7 +223,6 @@ export default function ClienteLayout() {
               
               {/* COMPONENTE DO CALENDÁRIO VISUAL */}
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-4">
-                {/* Header do Calendário */}
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-sm font-bold text-slate-200">
                     {nomesDosMeses[mesAtual.getMonth()]} de {mesAtual.getFullYear()}
@@ -229,14 +237,12 @@ export default function ClienteLayout() {
                   </div>
                 </div>
 
-                {/* Dias da semana */}
                 <div className="grid grid-cols-7 gap-1 text-center mb-1">
                   {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
                     <span key={i} className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-1">{d}</span>
                   ))}
                 </div>
 
-                {/* Grid de Dias */}
                 <div className="grid grid-cols-7 gap-1">
                   {diasDoCalendario.map((data, index) => {
                     if (!data) return <div key={`vazio-${index}`} className="aspect-square" />;
@@ -269,7 +275,6 @@ export default function ClienteLayout() {
                   })}
                 </div>
 
-                {/* Legenda do Calendário */}
                 <div className="mt-3 pt-3 border-t border-slate-900 flex justify-center gap-4 text-[10px] text-slate-500">
                   <div className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-slate-900 border border-slate-800" /> Disponível</div>
                   <div className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-950/20 border border-red-900/20 text-red-500 text-[6px] flex items-center justify-center font-bold">✕</span> Sem Vagas</div>
@@ -277,7 +282,7 @@ export default function ClienteLayout() {
                 </div>
               </div>
 
-              {carregandoHorarios && <p className="text-xs text-slate-400 animate-pulse text-center">Consultando horários disponíveis para {formData.data_ensaio.split('-').reverse().join('/')}...</p>}
+              {carregandoHorarios && <p className="text-xs text-slate-400 animate-pulse text-center">Consultando horários disponíveis...</p>}
 
               {!carregandoHorarios && disponibilidade.permitido === false && (
                 <div className="bg-amber-950/40 border border-amber-600/30 p-4 rounded-lg text-xs text-amber-400 leading-relaxed">
@@ -312,6 +317,7 @@ export default function ClienteLayout() {
             </div>
           )}
 
+          {/* Passo 3: Objetivos e E-mail */}
           {passo === 3 && (
             <div className="space-y-4">
               <div>
@@ -349,6 +355,7 @@ export default function ClienteLayout() {
             </div>
           )}
 
+          {/* Passo 4: Contato e Finalização */}
           {passo === 4 && (
             <div className="space-y-4">
               <label className="text-sm font-semibold text-slate-300 flex items-center gap-2">
