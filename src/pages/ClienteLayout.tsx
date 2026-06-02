@@ -24,6 +24,7 @@ export default function ClienteLayout() {
   const [disponibilidade, setDisponibilidade] = useState<{ permitido: boolean; horarios?: string[]; mensagem?: string }>({ permitido: true, horarios: [] });
   const [carregandoHorarios, setCarregandoHorarios] = useState(false);
   const [agendadoComSucesso, setAgendadoComSucesso] = useState(false);
+  const [enviandoAgendamento, setEnviandoAgendamento] = useState(false);
 
   // Estados do Calendário Customizado
   const [mesAtual, setMesAtual] = useState<Date>(new Date());
@@ -79,15 +80,23 @@ export default function ClienteLayout() {
     }
   }, [formData.data_ensaio]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await axios.post(`${API_URL}/agenda/agendar`, formData);
-      setAgendadoComSucesso(true);
-    } catch (error) {
-      alert('Erro ao realizar agendamento. Verifique se o backend está ligado.');
-    }
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (enviandoAgendamento) return;
+
+  try {
+    setEnviandoAgendamento(true);
+
+    await axios.post(`${API_URL}/agenda/agendar`, formData);
+
+    setAgendadoComSucesso(true);
+  } catch (error) {
+    alert('Erro ao realizar agendamento. Verifique se o backend está ligado.');
+  } finally {
+    setEnviandoAgendamento(false);
+  }
+};
 
   // Auxiliares do Calendário
   const obterDiasDoMes = (data: Date) => {
@@ -406,14 +415,15 @@ export default function ClienteLayout() {
                 <button 
                   type="submit" 
                   disabled={
-                    !formData.contato_nome || 
-                    !formData.contato_telefone || 
-                    !formData.contato_telefone.startsWith('55') || 
+                    enviandoAgendamento ||
+                    !formData.contato_nome ||
+                    !formData.contato_telefone ||
+                    !formData.contato_telefone.startsWith('55') ||
                     formData.contato_telefone.length < 12
-                  } 
+                  }
                   className="w-1/2 bg-[#0ABAB5] hover:bg-[#0ABAB5]/90 disabled:opacity-40 disabled:cursor-not-allowed p-3 rounded-lg font-bold text-slate-950 shadow-lg shadow-[#0ABAB5]/20 transition-all cursor-pointer uppercase tracking-wider"
                 >
-                  AGENDAR ENSAIO
+                  {enviandoAgendamento ? 'AGENDANDO...' : 'AGENDAR ENSAIO'}
                 </button>
               </div>
             </div>
