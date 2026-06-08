@@ -18,6 +18,11 @@ interface Ensaio {
   roteirista_responsavel: string | null;
   auxiliar_responsavel: string | null;
   motivo_cancelamento?: string | null;
+  
+  // 🚀 SEUS NOVOS CAMPOS DO BANCO DE DADOS:
+  link_roteiro: string | null;              // Inserido pelo Roteirista
+  link_arquivos_ensaio: string | null;      // Inserido pelo Filmmaker (indica que subiu os conteúdos)
+  link_materiais_auxiliares: string | null; // Inserido pelo Auxiliar
 }
 
 interface MembroEquipe {
