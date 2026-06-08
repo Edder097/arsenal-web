@@ -76,15 +76,7 @@ export default function FilmmakerPainel() {
       const roteirista = valores.roteirista;
       const auxiliar = valores.auxiliar;
 
-      if (roteirista && roteirista === auxiliar) {
-        alert("⚠️ Operação Inválida: O(A) mesmo(a) profissional não pode ser Roteirista e Auxiliar neste ensaio ao mesmo tempo!");
-        return;
-      }
-
-      if (fotografo && (fotografo === roteirista || fotografo === auxiliar)) {
-        alert("⚠️ Operação Inválida: O(A) Fotógrafo(a) não pode acumular outra função neste ensaio!");
-        return;
-      }
+      // Validações de acúmulo de função removidas daqui para permitir múltiplas escalações
 
       await axios.patch(`${API_URL}/painel/ensaios/${id}/status`, {
         fotografo_responsavel: fotografo,
@@ -163,28 +155,26 @@ export default function FilmmakerPainel() {
   const roteiristasDisponiveis = equipe.filter(m => m.eh_roteirista === true);
   const auxiliaresDisponiveis = equipe.filter(m => m.eh_auxiliar === true);
 
-// LÓGICA DE FILTRAGEM ATUALIZADA (Blindada contra Case Sensitivity)
-  const ensaiosFiltrados = ensaios.filter(ensaio => {
-    const atendeProfissional = !filtroProfissional || (
-      ensaio.fotografo_responsavel === filtroProfissional ||
-      ensaio.roteirista_responsavel === filtroProfissional ||
-      ensaio.auxiliar_responsavel === filtroProfissional
-    );
+  const ensaiosFiltrados = ensaios.filter(ensaio => {
+    const atendeProfissional = !filtroProfissional || (
+      ensaio.fotografo_responsavel === filtroProfissional ||
+      ensaio.roteirista_responsavel === filtroProfissional ||
+      ensaio.auxiliar_responsavel === filtroProfissional
+    );
 
-    // Padroniza o status para evitar bugs de ('Cancelado' vs 'cancelado')
-    const statusNormalizado = (ensaio.status || '').trim().toLowerCase();
+    const statusNormalizado = (ensaio.status || '').trim().toLowerCase();
 
-    let atendeStatus = true;
-    if (filtroStatus === 'pendente') {
-      atendeStatus = statusNormalizado !== 'concluído' && statusNormalizado !== 'concluido' && statusNormalizado !== 'cancelado';
-    } else if (filtroStatus === 'concluido') {
-      atendeStatus = statusNormalizado === 'concluído' || statusNormalizado === 'concluido';
-    } else if (filtroStatus === 'cancelado') {
-      atendeStatus = statusNormalizado === 'cancelado';
-    }
+    let atendeStatus = true;
+    if (filtroStatus === 'pendente') {
+      atendeStatus = statusNormalizado !== 'concluído' && statusNormalizado !== 'concluido' && statusNormalizado !== 'cancelado';
+    } else if (filtroStatus === 'concluido') {
+      atendeStatus = statusNormalizado === 'concluído' || statusNormalizado === 'concluido';
+    } else if (filtroStatus === 'cancelado') {
+      atendeStatus = statusNormalizado === 'cancelado';
+    }
 
-    return atendeProfissional && atendeStatus;
-  });
+    return atendeProfissional && atendeStatus;
+  });
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 font-sans">
