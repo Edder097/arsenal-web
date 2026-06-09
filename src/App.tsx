@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import ClienteLayout from './pages/ClienteLayout';
-import FilmmakerPainel from './pages/FilmakerPainel'; 
-import RoteiristaPainel from './pages/RoteiristaPainel'; // 👈 1. Importe o painel novo aqui
+import PainelEquipeDinamico from './pages/PainelEquipeDinamico'; // 🚀 Importando o novo painel unificado
 
 export default function App() {
   const [caminhoAtual, setCaminhoAtual] = useState(window.location.pathname);
 
   useEffect(() => {
-    // Escuta mudanças de navegação caso você queira fazer botões para alternar depois
     const tratarMudancaDeRota = () => {
       setCaminhoAtual(window.location.pathname);
     };
@@ -16,14 +14,9 @@ export default function App() {
     return () => window.removeEventListener('popstate', tratarMudancaDeRota);
   }, []);
 
-  // 🎛️ Roteamento condicional nativo e limpo
-  if (caminhoAtual === '/filmmaker') {
-    return <FilmmakerPainel />;
-  }
-
-  // 🚀 2. ADICIONE A CONDICIONAL PARA A NOVA TELA DO ROTEIRISTA:
-  if (caminhoAtual === '/roteirista') {
-    return <RoteiristaPainel />;
+  // 🎛️ Rota do Painel da Equipe com Login e Filtro Dinâmico
+  if (caminhoAtual === '/painel') {
+    return <PainelEquipeDinamico />;
   }
 
   // Qualquer outra rota padrão renderiza a tela de agendamento do cliente
