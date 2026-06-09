@@ -96,11 +96,13 @@ export default function PainelEquipeDinamico() {
     setLinksEditados(prev => ({ ...prev, [`${ensaioId}-${campo}`]: valor }));
   };
 
+  // Mantido para Filmmaker e Auxiliar continuarem salvando os links de texto deles
   const salvarLinkNoBanco = async (ensaioId: number, campo: string) => {
     setSalvandoId(ensaioId);
     const valorDoLink = linksEditados[`${ensaioId}-${campo}`];
 
     try {
+      // Nota: Certifique-se que sua rota antiga ou genérica atenda a essa requisição para as outras funções
       const res = await fetch(`${API_URL}/api/painel/ensaios/${ensaioId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -108,13 +110,55 @@ export default function PainelEquipeDinamico() {
       });
 
       if (res.ok) {
-        alert('Link updated successfully!');
+        alert('Link atualizado com sucesso!');
       } else {
         alert('Erro ao salvar o link.');
       }
     } catch (err) {
       console.error(err);
       alert('Erro de conexão ao salvar.');
+    } finally {
+      setSalvandoId(null);
+    }
+  };
+
+  // 🔥 NOVA FUNÇÃO: Faz o upload do PDF direto para a rota do Cloudflare R2 que criamos no back-end
+  const lidarComUploadRoteiro = async (ensaioId: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const arquivos = e.target.files;
+    if (!arquivos || arquivos.length === 0) return;
+
+    const arquivoSelecionado = arquivos[0];
+
+    // Validação extra no front-end para segurança
+    if (arquivoSelecionado.type !== 'application/pdf') {
+      alert('Por favor, selecione apenas arquivos no formato PDF.');
+      return;
+    }
+
+    setSalvandoId(ensaioId);
+
+    // Preparando o arquivo no formato multipart/form-data
+    const formData = new FormData();
+    formData.append('roteiro', arquivoSelecionado);
+
+    try {
+      const res = await fetch(`${API_URL}/api/painel/ensaios/${ensaioId}/roteiro`, {
+        method: 'PATCH',
+        body: formData, // O fetch define o Content-Type de forma automática aqui
+      });
+
+      const dados = await res.json();
+
+      if (res.ok) {
+        alert('Roteiro em PDF enviado e atualizado com sucesso!');
+        // Atualiza o estado dos ensaios em tempo real para exibir o novo botão de leitura do PDF
+        setEnsaios(prev => prev.map(ens => ens.id === ensaioId ? { ...ens, link_roteiro: dados.link_roteiro } : ens));
+      } else {
+        alert(dados.error || 'Erro ao fazer upload do arquivo.');
+      }
+    } catch (err) {
+      console.error('Erro no upload:', err);
+      alert('Erro de comunicação com o servidor ao subir o PDF.');
     } finally {
       setSalvandoId(null);
     }
@@ -200,17 +244,59 @@ export default function PainelEquipeDinamico() {
                       {ehAuxiliar && <span style={{ backgroundColor: '#f59e0b', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginLeft: '5px' }}>⚡ Auxiliar Técnico</span>}
                     </td>
                     <td style={{ padding: '15px' }}>
-                      {/* INPUT DO ROTEIRISTA */}
+                      
+                      {/* 👁️ COMENTÁRIO DO GEMINI: Central de materiais acessíveis para toda a equipe logada ver */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                        {ensaio.link_roteiro && (
+                          <a 
+                            href={ensaio.link_roteiro} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#1e3a8a', color: '#60a5fa', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #2563eb' }}
+                          >
+                            📄 Ver Roteiro (PDF R2)
+                          </a>
+                        )}
+                        {ensaio.link_arquivos_ensaio && (
+                          <a 
+                            href={ensaio.link_arquivos_ensaio} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#064e3b', color: '#34d399', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #059669' }}
+                          >
+                            🎬 Arquivos do Ensaio
+                          </a>
+                        )}
+                        {ensaio.link_materiais_auxiliares && (
+                          <a 
+                            href={ensaio.link_materiais_auxiliares} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#78350f', color: '#fbbf24', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #d97706' }}
+                          >
+                            ⚡ Mat. Auxiliares
+                          </a>
+                        )}
+                      </div>
+
+                      {/* 📤 NOVO ACCORDION/INPUT AUTOMÁTICO DO ROTEIRISTA */}
                       {ehRoteirista && (
-                        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                          <input 
-                            type="url" 
-                            placeholder="Colar link do Roteiro (Docs/Notion)" 
-                            value={linksEditados[`${ensaio.id}-link_roteiro`] || ''} 
-                            onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_roteiro', e.target.value)}
-                            style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #475569', backgroundColor: '#0f172a', color: '#fff' }}
-                          />
-                          <button onClick={() => salvarLinkNoBanco(ensaio.id, 'link_roteiro')} disabled={salvandoId === ensaio.id} style={{ backgroundColor: '#22c55e', border: 'none', borderRadius: '4px', padding: '8px 12px', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>Salvar</button>
+                        <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '6px', border: '1px solid #334155', marginBottom: '10px' }}>
+                          <label style={{ display: 'block', fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', marginBottom: '6px' }}>
+                            {ensaio.link_roteiro ? '🔄 SUBSTITUIR ARQUIVO PDF DO ROTEIRO' : '📤 SUBIR ARQUIVO PDF DO ROTEIRO'}
+                          </label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input 
+                              type="file" 
+                              accept=".pdf"
+                              disabled={salvandoId === ensaio.id}
+                              onChange={(e) => lidarComUploadRoteiro(ensaio.id, e)}
+                              style={{ color: '#cbd5e1', fontSize: '13px', cursor: 'pointer' }}
+                            />
+                            {salvandoId === ensaio.id && (
+                              <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 'bold' }}>Subindo...</span>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -228,7 +314,7 @@ export default function PainelEquipeDinamico() {
                         </div>
                       )}
 
-                      {/* INPUT DO AUXILIAR (Corrigido o bug do 'materials') */}
+                      {/* INPUT DO AUXILIAR */}
                       {ehAuxiliar && (
                         <div style={{ display: 'flex', gap: '10px' }}>
                           <input 
