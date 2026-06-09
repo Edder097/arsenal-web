@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ClienteLayout from './pages/ClienteLayout';
-import PainelEquipeDinamico from './pages/PainelEquipeDinamico'; // 🚀 Importando o novo painel unificado
+import PainelEquipeDinamico from './pages/PainelEquipeDinamico'; // 🚀 Novo painel unificado
+import FilmmakerPainel from './pages/FilmakerPainel'; // 🎛️ Seu painel de gerenciamento geral (ADM)
 
 export default function App() {
   const [caminhoAtual, setCaminhoAtual] = useState(window.location.pathname);
@@ -14,7 +15,12 @@ export default function App() {
     return () => window.removeEventListener('popstate', tratarMudancaDeRota);
   }, []);
 
-  // 🎛️ Rota do Painel da Equipe com Login e Filtro Dinâmico
+  // 🎛️ Rota do seu Painel de Gerenciamento Geral (ADM)
+  if (caminhoAtual === '/gerenciamento') {
+    return <FilmmakerPainel />;
+  }
+
+  // 🚀 Rota do Portal da Equipe Dinâmico com Login e Filtros
   if (caminhoAtual === '/painel') {
     return <PainelEquipeDinamico />;
   }

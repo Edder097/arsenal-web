@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://trabalho-agendamento-ensaios.onrender.com/api';
+// 🌐 Ajustado para a URL base limpa (o /api entra direto nas rotas abaixo)
+const API_URL = import.meta.env.VITE_API_URL || 'https://trabalho-agendamento-ensaios.onrender.com';
 
 interface Ensaio {
   id: number;
@@ -18,11 +19,9 @@ interface Ensaio {
   roteirista_responsavel: string | null;
   auxiliar_responsavel: string | null;
   motivo_cancelamento?: string | null;
-  
-  // 🚀 SEUS NOVOS CAMPOS DO BANCO DE DADOS:
-  link_roteiro: string | null;              // Inserido pelo Roteirista
-  link_arquivos_ensaio: string | null;      // Inserido pelo Filmmaker (indica que subiu os conteúdos)
-  link_materiais_auxiliares: string | null; // Inserido pelo Auxiliar
+  link_roteiro: string | null;
+  link_arquivos_ensaio: string | null;
+  link_materiais_auxiliares: string | null;
 }
 
 interface MembroEquipe {
@@ -40,19 +39,17 @@ export default function FilmmakerPainel() {
   const [equipe, setEquipe] = useState<MembroEquipe[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [filtroProfissional, setFiltroProfissional] = useState<string>('');
-  
-  // Estado para gerenciar as abas de status
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'pendente' | 'concluido' | 'cancelado'>('todos');
-
   const [equipeEditando, setEquipeEditando] = useState<{[key: number]: { fotografo: string, roteirista: string, auxiliar: string }}>({});
 
   const carregarDadosIniciais = async () => {
     try {
       setCarregando(true);
       
+      // 🚀 Adicionado /api explicitamente nas buscas iniciais
       const [resEnsaios, resEquipe] = await Promise.all([
-        axios.get(`${API_URL}/painel/ensaios`),
-        axios.get(`${API_URL}/painel/equipe`)
+        axios.get(`${API_URL}/api/painel/ensaios`),
+        axios.get(`${API_URL}/api/painel/equipe`)
       ]);
 
       setEnsaios(resEnsaios.data);
@@ -81,9 +78,8 @@ export default function FilmmakerPainel() {
       const roteirista = valores.roteirista;
       const auxiliar = valores.auxiliar;
 
-      // Validações de acúmulo de função removidas daqui para permitir múltiplas escalações
-
-      await axios.patch(`${API_URL}/painel/ensaios/${id}/status`, {
+      // 🚀 Adicionado /api explicitamente no patch de escalação
+      await axios.patch(`${API_URL}/api/painel/ensaios/${id}/status`, {
         fotografo_responsavel: fotografo,
         roteirista_responsavel: roteirista,
         auxiliar_responsavel: auxiliar
@@ -104,7 +100,8 @@ export default function FilmmakerPainel() {
 
   const marcarComoConcluido = async (id: number) => {
     try {
-      await axios.patch(`${API_URL}/painel/ensaios/${id}/status`, { status: 'Concluído' });
+      // 🚀 Adicionado /api explicitamente na conclusão
+      await axios.patch(`${API_URL}/api/painel/ensaios/${id}/status`, { status: 'Concluído' });
       setEnsaios(prev =>
         prev.map(ensaio => (ensaio.id === id ? { ...ensaio, status: 'Concluído' } : ensaio))
       );
@@ -123,7 +120,8 @@ export default function FilmmakerPainel() {
     }
 
     try {
-      await axios.patch(`${API_URL}/painel/ensaios/${id}/status`, { 
+      // 🚀 Adicionado /api explicitamente no cancelamento
+      await axios.patch(`${API_URL}/api/painel/ensaios/${id}/status`, { 
         status: 'Cancelado',
         motivo_cancelamento: motivo 
       });
@@ -384,7 +382,7 @@ export default function FilmmakerPainel() {
                           onChange={(e) => handleSelectChange(ensaio.id, 'fotografo', e.target.value)}
                           className="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-slate-200 focus:outline-none focus:border-[#0ABAB5] appearance-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
-                          <option value="">Selecione um professional...</option>
+                          <option value="">Selecione um profissional...</option>
                           {fotografosDisponiveis.map(f => (
                             <option key={f.id} value={f.nome}>{f.nome}</option>
                           ))}
@@ -400,7 +398,7 @@ export default function FilmmakerPainel() {
                           onChange={(e) => handleSelectChange(ensaio.id, 'roteirista', e.target.value)}
                           className="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-slate-200 focus:outline-none focus:border-[#0ABAB5] appearance-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
-                          <option value="">Selecione um professional...</option>
+                          <option value="">Selecione um profissional...</option>
                           {roteiristasDisponiveis.map(r => (
                             <option key={r.id} value={r.nome}>{r.nome}</option>
                           ))}
@@ -416,7 +414,7 @@ export default function FilmmakerPainel() {
                           onChange={(e) => handleSelectChange(ensaio.id, 'auxiliar', e.target.value)}
                           className="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-slate-200 focus:outline-none focus:border-[#0ABAB5] appearance-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
-                          <option value="">Selecione um professional...</option>
+                          <option value="">Selecione um profissional...</option>
                           {auxiliaresDisponiveis.map(a => (
                             <option key={a.id} value={a.nome}>{a.nome}</option>
                           ))}
