@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ClienteLayout from './pages/ClienteLayout';
-import PainelEquipeDinamico from './pages/PainelEquipeDinamico'; // 🚀 Novo painel unificado
-import FilmmakerPainel from './pages/FilmakerPainel'; // 🎛️ Seu painel de gerenciamento geral (ADM)
+import PainelEquipeDinamico from './pages/PainelEquipeDinamico'; // Novo painel unificado
+import FilmmakerPainel from './pages/FilmakerPainel'; // Seu painel de gerenciamento geral (ADM)
 
 export default function App() {
   const [caminhoAtual, setCaminhoAtual] = useState(window.location.pathname);
@@ -15,13 +15,17 @@ export default function App() {
     return () => window.removeEventListener('popstate', tratarMudancaDeRota);
   }, []);
 
+  // 🧹 Normaliza a rota: transforma em minúsculo e remove barras "/" extras no final
+  const rotaLimpa = caminhoAtual.toLowerCase().replace(/\/$/, '');
+
   // 🎛️ Rota do seu Painel de Gerenciamento Geral (ADM)
-  if (caminhoAtual === '/gerenciamento') {
+  // Agora aceita tanto /gerenciamento quanto /filmmaker sem dar erro por letra maiúscula
+  if (rotaLimpa === '/gerenciamento' || rotaLimpa === '/filmmaker') {
     return <FilmmakerPainel />;
   }
 
   // 🚀 Rota do Portal da Equipe Dinâmico com Login e Filtros
-  if (caminhoAtual === '/painel') {
+  if (rotaLimpa === '/painel') {
     return <PainelEquipeDinamico />;
   }
 
