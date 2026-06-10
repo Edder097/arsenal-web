@@ -23,6 +23,7 @@ export default function ClienteLayout() {
 
   const [disponibilidade, setDisponibilidade] = useState<{ permitido: boolean; horarios?: string[]; mensagem?: string }>({ permitido: true, horarios: [] });
   const [carregandoHorarios, setCarregandoHorarios] = useState(false);
+  const [carregandoCalendario, setCarregandoCalendario] = useState(false); // 👈 Controla o estado de carregamento do mês
   const [agendadoComSucesso, setAgendadoComSucesso] = useState(false);
   const [enviandoAgendamento, setEnviandoAgendamento] = useState(false);
 
@@ -33,6 +34,7 @@ export default function ClienteLayout() {
   // 1. Mapeia a disponibilidade de todos os dias do mês atual ao trocar de mês
   useEffect(() => {
     const mapearDisponibilidadeDoMes = async () => {
+      setCarregandoCalendario(true); // 👈 Bloqueia cliques e ativa feedback visual
       const ano = mesAtual.getFullYear();
       const mes = mesAtual.getMonth();
       const totalDiasNoMes = new Date(ano, mes + 1, 0).getDate();
@@ -51,13 +53,14 @@ export default function ClienteLayout() {
             }))
             .catch(() => ({
               data: dataStr,
-              vagas_disponiveis: 1 
+              vagas_disponiveis: 0 // 🔐 Segurança: Se o banco falhar/der timeout, assume que não há vaga
             }))
         );
       }
 
       const resultados = await Promise.all(chamadasAPI);
       setAgendaMes(resultados);
+      setCarregandoCalendario(false);
     };
 
     mapearDisponibilidadeDoMes();
@@ -80,23 +83,21 @@ export default function ClienteLayout() {
     }
   }, [formData.data_ensaio]);
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (enviandoAgendamento) return;
+    if (enviandoAgendamento) return;
 
-  try {
-    setEnviandoAgendamento(true);
-
-    await axios.post(`${API_URL}/agenda/agendar`, formData);
-
-    setAgendadoComSucesso(true);
-  } catch (error) {
-    alert('Erro ao realizar agendamento. Verifique se o backend está ligado.');
-  } finally {
-    setEnviandoAgendamento(false);
-  }
-};
+    try {
+      setEnviandoAgendamento(true);
+      await axios.post(`${API_URL}/agenda/agendar`, formData);
+      setAgendadoComSucesso(true);
+    } catch (error) {
+      alert('Erro ao realizar agendamento. Verifique se o backend está ligado.');
+    } finally {
+      setEnviandoAgendamento(false);
+    }
+  };
 
   // Auxiliares do Calendário
   const obterDiasDoMes = (data: Date) => {
@@ -116,6 +117,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   };
 
   const mudarMes = (direcao: number) => {
+    if (carregandoCalendario) return;
     setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth() + direcao, 1));
   };
 
@@ -142,8 +144,6 @@ const handleSubmit = async (e: React.FormEvent) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6 text-white">
         <div className="max-w-md w-full bg-slate-900 border border-[#0ABAB5]/30 p-8 rounded-2xl text-center shadow-xl">
-          
-          {/* Logo na tela de sucesso também */}
           <div className="flex justify-center mb-4">
             <img src="/Arsenal.png" alt="Logo" className="h-10 w-auto object-contain" />
           </div>
@@ -167,14 +167,12 @@ const handleSubmit = async (e: React.FormEvent) => {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
       <div className="max-w-xl w-full bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl">
         
-        {/* 🖼️ LOGOMARCA EM PNG (Puxa direto da pasta public/logo.png) */}
         <div className="flex justify-center mb-6">
           <img 
             src="/Arsenal.png" 
             alt="Logo Arsenal" 
             className="h-14 w-auto object-contain"
             onError={(e) => {
-              // Se o arquivo sumir ou der erro de path, mostra um texto discreto para não quebrar o layout
               e.currentTarget.style.display = 'none';
               console.warn("Coloque o arquivo logo.png dentro da pasta public do seu projeto.");
             }}
@@ -233,14 +231,15 @@ const handleSubmit = async (e: React.FormEvent) => {
               {/* COMPONENTE DO CALENDÁRIO VISUAL */}
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-4">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-sm font-bold text-slate-200">
+                  <span className="text-sm font-bold text-slate-200 flex items-center gap-2">
                     {nomesDosMeses[mesAtual.getMonth()]} de {mesAtual.getFullYear()}
+                    {carregandoCalendario && <span className="w-2 h-2 rounded-full bg-[#0ABAB5] animate-ping" />}
                   </span>
                   <div className="flex gap-1">
-                    <button type="button" onClick={() => mudarMes(-1)} className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-white">
+                    <button type="button" disabled={carregandoCalendario} onClick={() => mudarMes(-1)} className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-white disabled:opacity-30">
                       <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <button type="button" onClick={() => mudarMes(1)} className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-white">
+                    <button type="button" disabled={carregandoCalendario} onClick={() => mudarMes(1)} className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-white disabled:opacity-30">
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -252,7 +251,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-1">
+                <div className={`grid grid-cols-7 gap-1 transition-opacity duration-200 ${carregandoCalendario ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
                   {diasDoCalendario.map((data, index) => {
                     if (!data) return <div key={`vazio-${index}`} className="aspect-square" />;
                     
@@ -264,7 +263,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       <button
                         key={strData}
                         type="button"
-                        disabled={ehEsgotado}
+                        disabled={ehEsgotado || carregandoCalendario}
                         onClick={() => setFormData({ ...formData, data_ensaio: strData, hora_inicio: '' })}
                         className={`aspect-square relative flex items-center justify-center rounded-lg text-xs font-medium transition-all
                           ${ehEsgotado 
@@ -321,7 +320,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setPasso(1)} className="w-1/2 border border-slate-800 hover:bg-slate-800 p-3 rounded-lg font-semibold transition-colors cursor-pointer">Voltar</button>
-                <button type="button" disabled={!formData.data_ensaio || !formData.hora_inicio} onClick={() => setPasso(3)} className="w-1/2 bg-[#0ABAB5] hover:bg-[#0ABAB5]/90 text-slate-950 disabled:opacity-50 p-3 rounded-lg font-semibold transition-colors cursor-pointer">Avançar</button>
+                <button type="button" disabled={!formData.data_ensaio || !formData.hora_inicio || carregandoCalendario} onClick={() => setPasso(3)} className="w-1/2 bg-[#0ABAB5] hover:bg-[#0ABAB5]/90 text-slate-950 disabled:opacity-50 p-3 rounded-lg font-semibold transition-colors cursor-pointer">Avançar</button>
               </div>
             </div>
           )}
@@ -393,7 +392,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                     value={formData.contato_telefone}
                     onChange={(e) => {
                       let valor = e.target.value.replace(/\D/g, '');
-                      
                       if (valor.length > 0 && !valor.startsWith('55') && valor.length <= 11) {
                         if (valor.charAt(0) !== '5') {
                           valor = '55' + valor;
