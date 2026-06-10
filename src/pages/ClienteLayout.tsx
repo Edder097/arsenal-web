@@ -31,36 +31,23 @@ export default function ClienteLayout() {
   const [mesAtual, setMesAtual] = useState<Date>(new Date());
   const [agendaMes, setAgendaMes] = useState<OcupacaoMes[]>([]);
 
-  // 1. Mapeia a disponibilidade de todos os dias do mês atual ao trocar de mês
+// 1. Mapeia a disponibilidade de todos os dias do mês atual fazendo apenas UMA requisição
   useEffect(() => {
     const mapearDisponibilidadeDoMes = async () => {
-      setCarregandoCalendario(true); // 👈 Bloqueia cliques e ativa feedback visual
+      setCarregandoCalendario(true);
       const ano = mesAtual.getFullYear();
-      const mes = mesAtual.getMonth();
-      const totalDiasNoMes = new Date(ano, mes + 1, 0).getDate();
-      const chamadasAPI = [];
+      const mes = mesAtual.getMonth() + 1; // Transforma de 0-11 para 1-12
 
-      for (let dia = 1; dia <= totalDiasNoMes; dia++) {
-        const diaFormatado = String(dia).padStart(2, '0');
-        const mesFormatado = String(mes + 1).padStart(2, '0');
-        const dataStr = `${ano}-${mesFormatado}-${diaFormatado}`;
-
-        chamadasAPI.push(
-          axios.get(`${API_URL}/agenda/disponibilidade?data=${dataStr}`)
-            .then((res) => ({
-              data: dataStr,
-              vagas_disponiveis: (res.data.permitido && res.data.horarios?.length > 0) ? 1 : 0
-            }))
-            .catch(() => ({
-              data: dataStr,
-              vagas_disponiveis: 0 // 🔐 Segurança: Se o banco falhar/der timeout, assume que não há vaga
-            }))
-        );
+      try {
+        const response = await axios.get(`${API_URL}/agenda/disponibilidade-mes?ano=${ano}&mes=${mes}`);
+        setAgendaMes(response.data);
+      } catch (error) {
+        console.error("Erro ao carregar calendário mensal:", error);
+        // Fallback seguro caso a API caia por completo
+        setAgendaMes([]);
+      } finally {
+        setCarregandoCalendario(false);
       }
-
-      const resultados = await Promise.all(chamadasAPI);
-      setAgendaMes(resultados);
-      setCarregandoCalendario(false);
     };
 
     mapearDisponibilidadeDoMes();
