@@ -4,9 +4,11 @@ import { Calendar, Clock, Building2, Mail, Target, Phone, CheckCircle, ChevronLe
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://trabalho-agendamento-ensaios.onrender.com/api';
 
+// CONTRATO CORRIGIDO: Agora alinhado com as propriedades 'permitido' e 'mensagem' vindas do Back-end
 interface OcupacaoMes {
   data: string; // Formato 'YYYY-MM-DD'
-  vagas_disponiveis: number;
+  permitido: boolean;
+  mensagem?: string;
 }
 
 export default function ClienteLayout() {
@@ -23,7 +25,7 @@ export default function ClienteLayout() {
 
   const [disponibilidade, setDisponibilidade] = useState<{ permitido: boolean; horarios?: string[]; mensagem?: string }>({ permitido: true, horarios: [] });
   const [carregandoHorarios, setCarregandoHorarios] = useState(false);
-  const [carregandoCalendario, setCarregandoCalendario] = useState(false); // 👈 Controla o estado de carregamento do mês
+  const [carregandoCalendario, setCarregandoCalendario] = useState(false);
   const [agendadoComSucesso, setAgendadoComSucesso] = useState(false);
   const [enviandoAgendamento, setEnviandoAgendamento] = useState(false);
 
@@ -31,7 +33,7 @@ export default function ClienteLayout() {
   const [mesAtual, setMesAtual] = useState<Date>(new Date());
   const [agendaMes, setAgendaMes] = useState<OcupacaoMes[]>([]);
 
-// 1. Mapeia a disponibilidade de todos os dias do mês atual fazendo apenas UMA requisição
+  // 1. Mapeia a disponibilidade de todos os dias do mês atual fazendo apenas UMA requisição
   useEffect(() => {
     const mapearDisponibilidadeDoMes = async () => {
       setCarregandoCalendario(true);
@@ -87,7 +89,7 @@ export default function ClienteLayout() {
   };
 
   // Auxiliares do Calendário
-  const obterDiasDoMes = (data: Date) => {
+  const obtenerDiasDoMes = (data: Date) => {
     const ano = data.getFullYear();
     const mes = data.getMonth();
     const primeiroDiaDaSemana = new Date(ano, mes, 1).getDay();
@@ -115,13 +117,14 @@ export default function ClienteLayout() {
     return `${ano}-${mes}-${dia}`;
   };
 
+  // LOGICA CORRIGIDA: Bloqueia o dia visualmente caso 'permitido' seja retornado como false pelo back-end
   const checarDiaEsgotado = (data: Date) => {
     const str = formatarDataParaString(data);
     const registro = agendaMes.find(d => d.data === str);
-    return registro ? registro.vagas_disponiveis === 0 : false;
+    return registro ? !registro.permitido : false;
   };
 
-  const diasDoCalendario = obterDiasDoMes(mesAtual);
+  const diasDoCalendario = obtenerDiasDoMes(mesAtual);
   const nomesDosMeses = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
@@ -142,7 +145,7 @@ export default function ClienteLayout() {
             <span className="text-white font-semibold">{formData.hora_inicio}</span>.
           </p>
           <div className="text-slate-400 text-xs text-left leading-relaxed bg-slate-950 p-4 rounded-lg border border-slate-800">
-            Iremos entrar em contato com vocês para tirarmos algumas dúvidas para desenvolvermos o roteiro deste ensaio. Em até 48 horas antes do ensaio te enviaremos o roteiro finalizado, para aprovação!
+            Iremos entrar em contato com vocês para tirarmos algumas dúvidas para desenvolvermos o roteiro deste ensaio. Em até 48 hours antes do ensaio te enviaremos o roteiro finalizado, para aprovação!
           </div>
           <p className="mt-6 text-xl font-semibold text-[#0ABAB5]">Obrigado! 🚀</p>
         </div>
