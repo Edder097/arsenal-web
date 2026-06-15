@@ -30,7 +30,11 @@ export default function PainelEquipeDinamico() {
   const [linksEditados, setLinksEditados] = useState<{ [key: string]: string }>({});
   const [salvandoId, setSalvandoId] = useState<number | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  // 🌐 URL Base vinda do ambiente ou fallback
+  const API_URL = import.meta.env.VITE_API_URL || 'https://trabalho-agendamento-ensaios.onrender.com';
+
+  // 🔥 CORREÇÃO: Remove a duplicidade caso a variável do Render já termine com '/api'
+  const BASE_URL = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
   useEffect(() => {
     // Só busca os ensaios se houver um usuário logado
@@ -38,7 +42,8 @@ export default function PainelEquipeDinamico() {
 
     const carregarMeusEnsaios = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/painel/meus-ensaios?nomeColaborador=${encodeURIComponent(usuario.nome)}`);
+        // 🚀 Alterado para usar BASE_URL sem duplicar /api
+        const res = await fetch(`${BASE_URL}/painel/meus-ensaios?nomeColaborador=${encodeURIComponent(usuario.nome)}`);
         const dados = await res.json();
         if (res.ok) {
           setEnsaios(dados);
@@ -56,7 +61,7 @@ export default function PainelEquipeDinamico() {
       }
     };
     carregarMeusEnsaios();
-  }, [usuario, API_URL]);
+  }, [usuario, BASE_URL]);
 
   const lidarComLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +69,8 @@ export default function PainelEquipeDinamico() {
     setErroLogin('');
     
     try {
-      const res = await fetch(`${API_URL}/api/painel/auth/login`, {
+      // 🚀 Alterado para usar BASE_URL sem duplicar /api
+      const res = await fetch(`${BASE_URL}/painel/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailInput }),
@@ -96,21 +102,20 @@ export default function PainelEquipeDinamico() {
     setLinksEditados(prev => ({ ...prev, [`${ensaioId}-${campo}`]: valor }));
   };
 
-  // Mantido para Filmmaker e Auxiliar continuarem salvando os links de texto deles
   const salvarLinkNoBanco = async (ensaioId: number, campo: string) => {
     setSalvandoId(ensaioId);
     const valorDoLink = linksEditados[`${ensaioId}-${campo}`];
 
     try {
-      // Nota: Certifique-se que sua rota antiga ou genérica atenda a essa requisição para as outras funções
-      const res = await fetch(`${API_URL}/api/painel/ensaios/${ensaioId}/status`, {
+      // 🚀 Alterado para usar BASE_URL sem duplicar /api
+      const res = await fetch(`${BASE_URL}/painel/ensaios/${ensaioId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [campo]: valorDoLink })
       });
 
       if (res.ok) {
-        alert('Link atualizado com sucesso!');
+        alert('Link updated com sucesso!');
       } else {
         alert('Erro ao salvar o link.');
       }
@@ -122,14 +127,12 @@ export default function PainelEquipeDinamico() {
     }
   };
 
-  // 🔥 NOVA FUNÇÃO: Faz o upload do PDF direto para a rota do Cloudflare R2 que criamos no back-end
   const lidarComUploadRoteiro = async (ensaioId: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const arquivos = e.target.files;
     if (!arquivos || arquivos.length === 0) return;
 
     const arquivoSelecionado = arquivos[0];
 
-    // Validação extra no front-end para segurança
     if (arquivoSelecionado.type !== 'application/pdf') {
       alert('Por favor, selecione apenas arquivos no formato PDF.');
       return;
@@ -137,21 +140,20 @@ export default function PainelEquipeDinamico() {
 
     setSalvandoId(ensaioId);
 
-    // Preparando o arquivo no formato multipart/form-data
     const formData = new FormData();
     formData.append('roteiro', arquivoSelecionado);
 
     try {
-      const res = await fetch(`${API_URL}/api/painel/ensaios/${ensaioId}/roteiro`, {
+      // 🚀 Alterado para usar BASE_URL sem duplicar /api
+      const res = await fetch(`${BASE_URL}/painel/ensaios/${ensaioId}/roteiro`, {
         method: 'PATCH',
-        body: formData, // O fetch define o Content-Type de forma automática aqui
+        body: formData, 
       });
 
       const dados = await res.json();
 
       if (res.ok) {
-        alert('Roteiro em PDF enviado e atualizado com sucesso!');
-        // Atualiza o estado dos ensaios em tempo real para exibir o novo botão de leitura do PDF
+        alert('Roteiro em PDF enviado e updated com sucesso!');
         setEnsaios(prev => prev.map(ens => ens.id === ensaioId ? { ...ens, link_roteiro: dados.link_roteiro } : ens));
       } else {
         alert(dados.error || 'Erro ao fazer upload do arquivo.');
@@ -164,7 +166,7 @@ export default function PainelEquipeDinamico() {
     }
   };
 
-  // 🚪 SE NÃO ESTIVER LOGADO: Renderiza o formulário de login no mesmo padrão visual
+  // 🚪 SE NÃO ESTIVER LOGADO
   if (!usuario) {
     return (
       <div style={{ fontFamily: 'sans-serif', backgroundColor: '#0f172a', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '30px' }}>
@@ -174,7 +176,7 @@ export default function PainelEquipeDinamico() {
           
           <form onSubmit={lidarComLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 'bold', trackingSpacing: '1px' } as any}>E-MAIL DE ACESSO</label>
+              <label style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 'bold' }}>E-MAIL DE ACESSO</label>
               <input 
                 type="email" 
                 required
@@ -204,7 +206,7 @@ export default function PainelEquipeDinamico() {
     );
   }
 
-  // 💻 SE ESTIVER LOGADO: Renderiza a sua tabela original intacta
+  // 💻 SE ESTIVER LOGADO
   return (
     <div style={{ fontFamily: 'sans-serif', backgroundColor: '#0f172a', color: '#fff', minHeight: '100vh', padding: '30px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #1e293b', paddingBottom: '20px' }}>
@@ -245,7 +247,6 @@ export default function PainelEquipeDinamico() {
                     </td>
                     <td style={{ padding: '15px' }}>
                       
-                      {/* 👁️ COMENTÁRIO DO GEMINI: Central de materiais acessíveis para toda a equipe logada ver */}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                         {ensaio.link_roteiro && (
                           <a 
@@ -279,7 +280,6 @@ export default function PainelEquipeDinamico() {
                         )}
                       </div>
 
-                      {/* 📤 NOVO ACCORDION/INPUT AUTOMÁTICO DO ROTEIRISTA */}
                       {ehRoteirista && (
                         <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '6px', border: '1px solid #334155', marginBottom: '10px' }}>
                           <label style={{ display: 'block', fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', marginBottom: '6px' }}>
@@ -300,7 +300,6 @@ export default function PainelEquipeDinamico() {
                         </div>
                       )}
 
-                      {/* INPUT DO FILMMAKER */}
                       {ehFilmmaker && (
                         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                           <input 
@@ -314,7 +313,6 @@ export default function PainelEquipeDinamico() {
                         </div>
                       )}
 
-                      {/* INPUT DO AUXILIAR */}
                       {ehAuxiliar && (
                         <div style={{ display: 'flex', gap: '10px' }}>
                           <input 
