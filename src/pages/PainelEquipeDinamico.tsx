@@ -109,8 +109,6 @@ export default function PainelEquipeDinamico() {
 
       if (res.ok) {
         alert('Link atualizado com sucesso!');
-        
-        // Mantém a sincronização em tempo real na tela
         setEnsaios(prev => prev.map(ens => 
           ens.id === ensaioId ? { ...ens, [campo]: valorDoLink } : ens
         ));
@@ -163,38 +161,47 @@ export default function PainelEquipeDinamico() {
     }
   };
 
+  // 🔑 TELA DE LOGIN PREMIUM
   if (!usuario) {
     return (
-      <div style={{ fontFamily: 'sans-serif', backgroundColor: '#0f172a', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '30px' }}>
-        <div style={{ backgroundColor: '#1e293b', borderRadius: '8px', maxWidth: '400px', width: '100%', padding: '30px', border: '1px solid #334155' }}>
-          <h2 style={{ margin: '0 0 10px 0', fontSize: '22px', textAlign: 'center' }}>Arsenal Connect 🛠️</h2>
-          <p style={{ margin: '0 0 20px 0', color: '#94a3b8', fontSize: '14px', textAlign: 'center' }}>Painel Operacional da Equipe</p>
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 antialiased font-sans">
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl max-w-md w-full p-8 shadow-2xl transition-all">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-black tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+              Arsenal Connect 🛠️
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-1.5 uppercase tracking-wider">
+              Painel Operacional da Equipe
+            </p>
+          </div>
           
-          <form onSubmit={lidarComLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 'bold' }}>E-MAIL DE ACESSO</label>
+          <form onSubmit={lidarComLogin} className="space-y-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
+                E-mail de Acesso
+              </label>
               <input 
                 type="email" 
                 required
                 placeholder="seu.email@empresa.com"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
-                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #475569', backgroundColor: '#0f172a', color: '#fff', fontSize: '14px' }}
+                className="w-full bg-slate-950/60 border border-slate-800 focus:border-slate-600 focus:ring-1 focus:ring-slate-600 text-sm text-slate-100 px-4 py-3 rounded-xl placeholder-slate-700 outline-none transition-all"
               />
             </div>
 
             {erroLogin && (
-              <p style={{ color: '#f87171', fontSize: '13px', margin: 0, backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '4px', textAlign: 'center', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              <div className="text-xs text-rose-400 bg-rose-500/5 border border-rose-500/10 p-3 rounded-xl text-center font-medium">
                 {erroLogin}
-              </p>
+              </div>
             )}
 
             <button 
               type="submit" 
               disabled={carregandoLogin}
-              style={{ backgroundColor: '#fff', color: '#0f172a', border: 'none', padding: '12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', opacity: carregandoLogin ? 0.7 : 1 } as any}
+              className="w-full bg-white hover:bg-slate-100 text-slate-950 font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
             >
-              {carregandoLogin ? 'Verificando...' : 'Entrar no Painel'}
+              {carregandoLogin ? 'Verificando as credenciais...' : 'Entrar no Painel'}
             </button>
           </form>
         </div>
@@ -202,134 +209,210 @@ export default function PainelEquipeDinamico() {
     );
   }
 
+  // 🖥️ PAINEL PRINCIPAL REESTRUTURADO EM CARDS
   return (
-    <div style={{ fontFamily: 'sans-serif', backgroundColor: '#0f172a', color: '#fff', minHeight: '100vh', padding: '30px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #1e293b', paddingBottom: '20px' }}>
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 antialiased font-sans">
+      
+      {/* HEADER DO CONTEXTO */}
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8 border-b border-slate-900 pb-6">
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px' }}>Painel Operacional do Colaborador 🛠️</h1>
-          <p style={{ margin: '5px 0 0 0', color: '#94a3b8' }}>Bem-vindo de volta, <strong>{usuario.nome}</strong></p>
+          <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-100">
+            Painel Operacional do Colaborador 🛠️
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Bem-vindo de volta, <span className="text-slate-200 font-semibold">{usuario.nome}</span>
+          </p>
         </div>
-        <button onClick={onLogout} style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Sair</button>
+        <button 
+          onClick={onLogout} 
+          className="self-start sm:self-center bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98]"
+        >
+          Sair do Painel
+        </button>
       </div>
 
       {ensaios.length === 0 ? (
-        <p style={{ color: '#94a3b8' }}>Você não possui nenhum ensaio escalado no momento.</p>
+        <div className="bg-slate-900/20 border border-dashed border-slate-800 rounded-2xl p-12 text-center">
+          <p className="text-sm text-slate-500 font-medium">Você não possui nenhum ensaio escalado no momento.</p>
+        </div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', backgroundColor: '#1e293b', borderRadius: '8px', overflow: 'hidden' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#334155', color: '#cbd5e1' }}>
-                <th style={{ padding: '12px 15px' }}>Empresa</th>
-                <th style={{ padding: '12px 15px' }}>Data / Hora</th>
-                <th style={{ padding: '12px 15px' }}>Sua Função Ocupada</th>
-                <th style={{ padding: '12px 15px' }}>Entrega do Documento / Link</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ensaios.map(ensaio => {
-                const ehRoteirista = ensaio.roteirista_responsavel === usuario.nome;
-                const ehFilmmaker = ensaio.fotografo_responsavel === usuario.nome;
-                const ehAuxiliar = ensaio.auxiliar_responsavel === usuario.nome;
+        /* GRID DE CARDS INTELIGENTES */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {ensaios.map(ensaio => {
+            const ehRoteirista = ensaio.roteirista_responsavel === usuario.nome;
+            const ehFilmmaker = ensaio.fotografo_responsavel === usuario.nome;
+            const ehAuxiliar = ensaio.auxiliar_responsavel === usuario.nome;
 
-                return (
-                  <tr key={ensaio.id} style={{ borderBottom: '1px solid #334155' }}>
-                    <td style={{ padding: '15px' }}><strong>{ensaio.empresa_nome}</strong></td>
-                    <td style={{ padding: '15px' }}>{ensaio.data_ensaio} às {ensaio.hora_inicio.substring(0, 5)}</td>
-                    <td style={{ padding: '15px' }}>
-                      {ehRoteirista && <span style={{ backgroundColor: '#3b82f6', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>📝 Roteirista</span>}
-                      {ehFilmmaker && <span style={{ backgroundColor: '#10b981', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginLeft: '5px' }}>🎥 Filmmaker</span>}
-                      {ehAuxiliar && <span style={{ backgroundColor: '#f59e0b', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginLeft: '5px' }}>⚡ Auxiliar Técnico</span>}
-                    </td>
-                    <td style={{ padding: '15px' }}>
-                      
-                      {/* 👁️ Central de materiais compartilhados */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-                        {ensaio.link_roteiro && (
-                          <a 
-                            href={ensaio.link_roteiro} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#1e3a8a', color: '#60a5fa', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #2563eb' }}
-                          >
-                            📄 Ver Roteiro (PDF R2)
-                          </a>
-                        )}
-                        {ensaio.link_arquivos_ensaio && (
-                          <a 
-                            href={ensaio.link_arquivos_ensaio} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#064e3b', color: '#34d399', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #059669' }}
-                          >
-                            🎬 Arquivos do Ensaio
-                          </a>
-                        )}
-                        {ensaio.link_materiais_auxiliares && (
-                          <a 
-                            href={ensaio.link_materiais_auxiliares} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#78350f', color: '#fbbf24', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #d97706' }}
-                          >
-                            ⚡ Mat. Auxiliares
-                          </a>
+            return (
+              <div 
+                key={ensaio.id} 
+                className="bg-slate-900/40 backdrop-blur-sm border border-slate-900 rounded-2xl p-5 shadow-xl flex flex-col justify-between gap-5 transition-all hover:border-slate-800/80"
+              >
+                {/* 1. TOPO: Identificação e Funções */}
+                <div className="flex flex-col gap-2.5 border-b border-slate-900 pb-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-base font-bold text-slate-200 tracking-tight leading-snug">
+                      {ensaio.empresa_nome}
+                    </h3>
+                    <span className="shrink-0 bg-slate-950 text-slate-400 border border-slate-800 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+                      ID: {ensaio.id}
+                    </span>
+                  </div>
+                  
+                  {/* Badges de Atribuição do usuário logado */}
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {ehRoteirista && (
+                      <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
+                        📝 Roteirista
+                      </span>
+                    )}
+                    {ehFilmmaker && (
+                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
+                        🎥 Filmmaker
+                      </span>
+                    )}
+                    {ehAuxiliar && (
+                      <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
+                        ⚡ Auxiliar Técnico
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. INFOS DE METADADOS */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-slate-950/40 border border-slate-900/60 rounded-xl p-2.5">
+                    <span className="block text-[9px] uppercase text-slate-500 font-bold tracking-wider mb-0.5">📅 Data</span>
+                    <span className="text-slate-300 font-medium">{ensaio.data_ensaio}</span>
+                  </div>
+                  <div className="bg-slate-950/40 border border-slate-900/60 rounded-xl p-2.5">
+                    <span className="block text-[9px] uppercase text-slate-500 font-bold tracking-wider mb-0.5">⏰ Horário</span>
+                    <span className="text-slate-300 font-medium">{ensaio.hora_inicio.substring(0, 5)}</span>
+                  </div>
+                </div>
+
+                {/* 3. MONITOR DE ENTREGAS (LINKS ATUAIS) */}
+                <div className="bg-slate-950/60 border border-slate-900 rounded-xl p-3.5 space-y-2.5">
+                  <span className="block text-[9px] uppercase tracking-widest text-slate-500 font-bold">
+                    Materiais do Ensaio
+                  </span>
+                  
+                  <div className="flex flex-col gap-2 text-xs">
+                    {/* Linha Roteiro */}
+                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-900 last:border-0 last:pb-0">
+                      <span className="text-slate-400">Roteiro:</span>
+                      {ensaio.link_roteiro ? (
+                        <a href={ensaio.link_roteiro} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline font-semibold bg-blue-500/5 px-2 py-0.5 rounded border border-blue-500/10">
+                          Acessar PDF 🔗
+                        </a>
+                      ) : (
+                        <span className="text-slate-600 italic">Pendente</span>
+                      )}
+                    </div>
+
+                    {/* Linha Brutos */}
+                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-900 last:border-0 last:pb-0">
+                      <span className="text-slate-400">Brutos/Drive:</span>
+                      {ensaio.link_arquivos_ensaio ? (
+                        <a href={ensaio.link_arquivos_ensaio} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline font-semibold bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10">
+                          Ver Mídias 🔗
+                        </a>
+                      ) : (
+                        <span className="text-slate-600 italic">Pendente</span>
+                      )}
+                    </div>
+
+                    {/* Linha Auxiliares */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Mat. Auxiliares:</span>
+                      {ensaio.link_materiais_auxiliares ? (
+                        <a href={ensaio.link_materiais_auxiliares} target="_blank" rel="noreferrer" className="text-amber-400 hover:underline font-semibold bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10">
+                          Ver Anexos 🔗
+                        </a>
+                      ) : (
+                        <span className="text-slate-600 italic">Pendente</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. SEÇÃO DINÂMICA DE INPUTS BASEADA NA FUNÇÃO */}
+                <div className="mt-2 pt-4 border-t border-slate-900 space-y-3.5">
+                  
+                  {/* INPUT DO ROTEIRISTA */}
+                  {ehRoteirista && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
+                        {ensaio.link_roteiro ? '🔄 Substituir arquivo do Roteiro' : '📤 Subir Roteiro Oficial'}
+                      </label>
+                      <div className="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <input 
+                          type="file" 
+                          accept=".pdf"
+                          disabled={salvandoId === ensaio.id}
+                          onChange={(e) => lidarComUploadRoteiro(ensaio.id, e)}
+                          className="block w-full text-xs text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 file:cursor-pointer cursor-pointer transition-all outline-none"
+                        />
+                        {salvandoId === ensaio.id && (
+                          <span className="text-[11px] text-blue-400 font-bold animate-pulse shrink-0">Subindo...</span>
                         )}
                       </div>
+                    </div>
+                  )}
 
-                      {/* INPUT DO ROTEIRISTA */}
-                      {ehRoteirista && (
-                        <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '6px', border: '1px solid #334155', marginBottom: '10px' }}>
-                          <label style={{ display: 'block', fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', marginBottom: '6px' }}>
-                            {ensaio.link_roteiro ? '🔄 SUBSTITUIR ARQUIVO PDF DO ROTEIRO' : '📤 SUBIR ARQUIVO PDF DO ROTEIRO'}
-                          </label>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <input 
-                              type="file" 
-                              accept=".pdf"
-                              disabled={salvandoId === ensaio.id}
-                              onChange={(e) => lidarComUploadRoteiro(ensaio.id, e)}
-                              style={{ color: '#cbd5e1', fontSize: '13px', cursor: 'pointer' }}
-                            />
-                            {salvandoId === ensaio.id && (
-                              <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 'bold' }}>Subindo...</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                  {/* INPUT DO FILMMAKER */}
+                  {ehFilmmaker && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
+                        Entrega de Arquivos Brutos (Filmmaker)
+                      </label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="url" 
+                          placeholder="Link do Drive ou Frame.io" 
+                          value={linksEditados[`${ensaio.id}-link_arquivos_ensaio`] || ''} 
+                          onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_arquivos_ensaio', e.target.value)}
+                          className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all"
+                        />
+                        <button 
+                          onClick={() => salvarLinkNoBanco(ensaio.id, 'link_arquivos_ensaio')} 
+                          disabled={salvandoId === ensaio.id}
+                          className="bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-50"
+                        >
+                          Salvar
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
-                      {/* INPUT DO FILMMAKER */}
-                      {ehFilmmaker && (
-                        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                          <input 
-                            type="url" 
-                            placeholder="Colar link dos Brutos/Editados (Drive/Frame.io)" 
-                            value={linksEditados[`${ensaio.id}-link_arquivos_ensaio`] || ''} 
-                            onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_arquivos_ensaio', e.target.value)}
-                            style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #475569', backgroundColor: '#0f172a', color: '#fff' }}
-                          />
-                          <button onClick={() => salvarLinkNoBanco(ensaio.id, 'link_arquivos_ensaio')} disabled={salvandoId === ensaio.id} style={{ backgroundColor: '#22c55e', border: 'none', borderRadius: '4px', padding: '8px 12px', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>Salvar</button>
-                        </div>
-                      )}
-
-                      {/* INPUT DO AUXILIAR */}
-                      {ehAuxiliar && (
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                          <input 
-                            type="url" 
-                            placeholder="Colar link de Materiais Auxiliares" 
-                            value={linksEditados[`${ensaio.id}-link_materiais_auxiliares`] || ''} 
-                            onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_materiais_auxiliares', e.target.value)}
-                            style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #475569', backgroundColor: '#0f172a', color: '#fff' }}
-                          />
-                          <button onClick={() => salvarLinkNoBanco(ensaio.id, 'link_materiais_auxiliares')} disabled={salvandoId === ensaio.id} style={{ backgroundColor: '#22c55e', border: 'none', borderRadius: '4px', padding: '8px 12px', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>Salvar</button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  {/* INPUT DO AUXILIAR */}
+                  {ehAuxiliar && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
+                        Entrega de Materiais Auxiliares (Auxiliar)
+                      </label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="url" 
+                          placeholder="Link do Material de Apoio" 
+                          value={linksEditados[`${ensaio.id}-link_materiais_auxiliares`] || ''} 
+                          onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_materiais_auxiliares', e.target.value)}
+                          className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all"
+                        />
+                        <button 
+                          onClick={() => salvarLinkNoBanco(ensaio.id, 'link_materiais_auxiliares')} 
+                          disabled={salvandoId === ensaio.id}
+                          className="bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 border border-amber-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-50"
+                        >
+                          Salvar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
