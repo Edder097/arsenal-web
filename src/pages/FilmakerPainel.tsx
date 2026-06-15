@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-// 🌐 Ajustado para a URL base limpa (o /api entra direto nas rotas abaixo)
+// 🌐 URL Base vinda do ambiente ou fallback
 const API_URL = import.meta.env.VITE_API_URL || 'https://trabalho-agendamento-ensaios.onrender.com';
+
+// 🔥 CORREÇÃO: Remove a duplicidade caso a variável do Render já termine com '/api'
+const BASE_URL = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
 interface Ensaio {
   id: number;
@@ -46,10 +49,10 @@ export default function FilmmakerPainel() {
     try {
       setCarregando(true);
       
-      // 🚀 Adicionado /api explicitamente nas buscas iniciais
+      // 🚀 Alterado para usar BASE_URL sem duplicar /api
       const [resEnsaios, resEquipe] = await Promise.all([
-        axios.get(`${API_URL}/api/painel/ensaios`),
-        axios.get(`${API_URL}/api/painel/equipe`)
+        axios.get(`${BASE_URL}/painel/ensaios`),
+        axios.get(`${BASE_URL}/painel/equipe`)
       ]);
 
       setEnsaios(resEnsaios.data);
@@ -78,8 +81,8 @@ export default function FilmmakerPainel() {
       const roteirista = valores.roteirista;
       const auxiliar = valores.auxiliar;
 
-      // 🚀 Adicionado /api explicitamente no patch de escalação
-      await axios.patch(`${API_URL}/api/painel/ensaios/${id}/status`, {
+      // 🚀 Alterado para usar BASE_URL
+      await axios.patch(`${BASE_URL}/painel/ensaios/${id}/status`, {
         fotografo_responsavel: fotografo,
         roteirista_responsavel: roteirista,
         auxiliar_responsavel: auxiliar
@@ -100,8 +103,8 @@ export default function FilmmakerPainel() {
 
   const marcarComoConcluido = async (id: number) => {
     try {
-      // 🚀 Adicionado /api explicitamente na conclusão
-      await axios.patch(`${API_URL}/api/painel/ensaios/${id}/status`, { status: 'Concluído' });
+      // 🚀 Alterado para usar BASE_URL
+      await axios.patch(`${BASE_URL}/painel/ensaios/${id}/status`, { status: 'Concluído' });
       setEnsaios(prev =>
         prev.map(ensaio => (ensaio.id === id ? { ...ensaio, status: 'Concluído' } : ensaio))
       );
@@ -120,8 +123,8 @@ export default function FilmmakerPainel() {
     }
 
     try {
-      // 🚀 Adicionado /api explicitamente no cancelamento
-      await axios.patch(`${API_URL}/api/painel/ensaios/${id}/status`, { 
+      // 🚀 Alterado para usar BASE_URL
+      await axios.patch(`${BASE_URL}/painel/ensaios/${id}/status`, { 
         status: 'Cancelado',
         motivo_cancelamento: motivo 
       });
@@ -197,7 +200,7 @@ export default function FilmmakerPainel() {
             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white to-[#0ABAB5] bg-clip-text text-transparent">
               Cronograma de Production
             </h1>
-            <p className="text-slate-400 text-sm mt-1">Painel operacional para filmmakers e editores do Arsenal Connect</p>
+            <p className="text-slate-400 text-sm mt-1">Painel operational para filmmakers e editores do Arsenal Connect</p>
           </div>
         </div>
         <button 
