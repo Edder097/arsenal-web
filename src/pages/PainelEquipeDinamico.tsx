@@ -16,7 +16,6 @@ interface Ensaio {
 }
 
 export default function PainelEquipeDinamico() {
-  // 🔐 O próprio painel agora gerencia e lembra quem está logado
   const [usuario, setUsuario] = useState<{ id: number; nome: string; email: string } | null>(() => {
     const salvo = localStorage.getItem('arsenal_usuario');
     return salvo ? JSON.parse(salvo) : null;
@@ -30,18 +29,20 @@ export default function PainelEquipeDinamico() {
   const [linksEditados, setLinksEditados] = useState<{ [key: string]: string }>({});
   const [salvandoId, setSalvandoId] = useState<number | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  // 🛡️ CONFIGURAÇÃO BLINDADA DE URL: Evita a duplicidade de /api/api
+  const API_URL = import.meta.env.VITE_API_URL || '';
+  const BASE_URL = API_URL.endsWith('/api') ? API_URL : (API_URL ? `${API_URL}/api` : '/api');
 
   useEffect(() => {
     if (!usuario) return;
 
     const carregarMeusEnsaios = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/painel/meus-ensaios?nomeColaborador=${encodeURIComponent(usuario.nome)}`);
+        const res = await fetch(`${BASE_URL}/painel/meus-ensaios?nomeColaborador=${encodeURIComponent(usuario.nome)}`);
         const dados = await res.json();
         if (res.ok) {
           setEnsaios(dados);
-          // Inicializa o estado dos inputs com os links já salvos no banco
+          
           const mapaLinks: { [key: string]: string } = {};
           dados.forEach((e: Ensaio) => {
             mapaLinks[`${e.id}-link_roteiro`] = e.link_roteiro || '';
@@ -55,7 +56,7 @@ export default function PainelEquipeDinamico() {
       }
     };
     carregarMeusEnsaios();
-  }, [usuario, API_URL]);
+  }, [usuario, BASE_URL]);
 
   const lidarComLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +64,7 @@ export default function PainelEquipeDinamico() {
     setErroLogin('');
     
     try {
-      const res = await fetch(`${API_URL}/api/painel/auth/login`, {
+      const res = await fetch(`${BASE_URL}/painel/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailInput }),
@@ -95,13 +96,12 @@ export default function PainelEquipeDinamico() {
     setLinksEditados(prev => ({ ...prev, [`${ensaioId}-${campo}`]: valor }));
   };
 
-  // 🔥 FUNÇÃO CORRIGIDA: Agora atualiza o estado local 'ensaios' imediatamente após salvar no banco!
   const salvarLinkNoBanco = async (ensaioId: number, campo: string) => {
     setSalvandoId(ensaioId);
     const valorDoLink = linksEditados[`${ensaioId}-${campo}`];
 
     try {
-      const res = await fetch(`${API_URL}/api/painel/ensaios/${ensaioId}/status`, {
+      const res = await fetch(`${BASE_URL}/painel/ensaios/${ensaioId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [campo]: valorDoLink })
@@ -110,7 +110,7 @@ export default function PainelEquipeDinamico() {
       if (res.ok) {
         alert('Link atualizado com sucesso!');
         
-        // 🔄 SINCRONIZAÇÃO EM TEMPO REAL: Força todos os botões ativos a renderizarem juntos na tela
+        // Mantém a sincronização em tempo real na tela
         setEnsaios(prev => prev.map(ens => 
           ens.id === ensaioId ? { ...ens, [campo]: valorDoLink } : ens
         ));
@@ -142,7 +142,7 @@ export default function PainelEquipeDinamico() {
     formData.append('roteiro', arquivoSelecionado);
 
     try {
-      const res = await fetch(`${API_URL}/api/painel/ensaios/${ensaioId}/roteiro`, {
+      const res = await fetch(`${BASE_URL}/painel/ensaios/${ensaioId}/roteiro`, {
         method: 'PATCH',
         body: formData,
       });
@@ -242,7 +242,7 @@ export default function PainelEquipeDinamico() {
                     </td>
                     <td style={{ padding: '15px' }}>
                       
-                      {/* 👁️ Central de materiais: Todos os blocos são independentes e vão aparecer juntos se existirem */}
+                      {/* 👁️ Central de materiais compartilhados */}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                         {ensaio.link_roteiro && (
                           <a 
