@@ -49,7 +49,6 @@ export default function FilmmakerPainel() {
     try {
       setCarregando(true);
       
-      // 🚀 Alterado para usar BASE_URL sem duplicar /api
       const [resEnsaios, resEquipe] = await Promise.all([
         axios.get(`${BASE_URL}/painel/ensaios`),
         axios.get(`${BASE_URL}/painel/equipe`)
@@ -81,7 +80,6 @@ export default function FilmmakerPainel() {
       const roteirista = valores.roteirista;
       const auxiliar = valores.auxiliar;
 
-      // 🚀 Alterado para usar BASE_URL
       await axios.patch(`${BASE_URL}/painel/ensaios/${id}/status`, {
         fotografo_responsavel: fotografo,
         roteirista_responsavel: roteirista,
@@ -103,7 +101,6 @@ export default function FilmmakerPainel() {
 
   const marcarComoConcluido = async (id: number) => {
     try {
-      // 🚀 Alterado para usar BASE_URL
       await axios.patch(`${BASE_URL}/painel/ensaios/${id}/status`, { status: 'Concluído' });
       setEnsaios(prev =>
         prev.map(ensaio => (ensaio.id === id ? { ...ensaio, status: 'Concluído' } : ensaio))
@@ -123,7 +120,6 @@ export default function FilmmakerPainel() {
     }
 
     try {
-      // 🚀 Alterado para usar BASE_URL
       await axios.patch(`${BASE_URL}/painel/ensaios/${id}/status`, { 
         status: 'Cancelado',
         motivo_cancelamento: motivo 
@@ -185,7 +181,7 @@ export default function FilmmakerPainel() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 font-sans">
       
-      {/* Header com a Logomarca PNG */}
+      {/* Header */}
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-800 pb-6 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <img 
@@ -213,8 +209,6 @@ export default function FilmmakerPainel() {
 
       {/* Área de Filtros e Seleções */}
       <div className="max-w-7xl mx-auto mb-8 flex flex-col gap-4">
-        
-        {/* Filtro por Integrante */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-3 shadow-md">
           <div className="w-full sm:w-auto">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block sm:inline">Filtrar por Integrante:</span>
@@ -290,10 +284,9 @@ export default function FilmmakerPainel() {
             Cancelados
           </button>
         </div>
-
       </div>
 
-      {/* Conteúdo Principal (Grid de Missões) */}
+      {/* Grid de Missões */}
       <div className="max-w-7xl mx-auto">
         {carregando ? (
           <div className="text-center text-slate-500 py-12 animate-pulse font-medium">Carregando missões da semana...</div>
@@ -367,6 +360,65 @@ export default function FilmmakerPainel() {
                       </div>
                     )}
 
+                    {/* 🚀 NOVA SEÇÃO: Status dos Entregáveis / Links salvos */}
+                    <div className="mb-5 bg-slate-950/40 border border-slate-850 rounded-lg p-3 space-y-2">
+                      <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                        Progresso de Entrega / Links
+                      </span>
+                      <div className="flex flex-col gap-1.5 text-xs">
+                        {/* Status do Roteiro */}
+                        <div className="flex items-center justify-between py-0.5 border-b border-slate-900/50 last:border-0">
+                          <span className="text-slate-400">✍️ Roteiro:</span>
+                          {ensaio.link_roteiro ? (
+                            <a 
+                              href={ensaio.link_roteiro} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="text-[#0ABAB5] hover:underline font-medium text-[11px] flex items-center gap-1"
+                            >
+                              ✅ Acessar Roteiro 🔗
+                            </a>
+                          ) : (
+                            <span className="text-slate-600 text-[11px] italic">⏳ Pendente</span>
+                          )}
+                        </div>
+
+                        {/* Status dos Arquivos do Filmmaker */}
+                        <div className="flex items-center justify-between py-0.5 border-b border-slate-900/50 last:border-0">
+                          <span className="text-slate-400">🎬 Arquivos Brutos:</span>
+                          {ensaio.link_arquivos_ensaio ? (
+                            <a 
+                              href={ensaio.link_arquivos_ensaio} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="text-emerald-400 hover:underline font-medium text-[11px] flex items-center gap-1"
+                            >
+                              ✅ Arquivos Enviados 🔗
+                            </a>
+                          ) : (
+                            <span className="text-slate-600 text-[11px] italic">⏳ Pendente</span>
+                          )}
+                        </div>
+
+                        {/* Status de Materiais Auxiliares */}
+                        <div className="flex items-center justify-between py-0.5 last:border-0">
+                          <span className="text-slate-400">💼 Mat. Auxiliares:</span>
+                          {ensaio.link_materiais_auxiliares ? (
+                            <a 
+                              href={ensaio.link_materiais_auxiliares} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="text-emerald-400 hover:underline font-medium text-[11px] flex items-center gap-1"
+                            >
+                              ✅ Mat. Enviados 🔗
+                            </a>
+                          ) : (
+                            <span className="text-slate-600 text-[11px] italic">⏳ Pendente</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Form de Escalação de Equipe */}
                     <div className="space-y-2.5 bg-slate-950/50 p-3 rounded-lg border border-slate-850 mb-6">
                       <div className="flex justify-between items-center mb-1">
@@ -376,7 +428,6 @@ export default function FilmmakerPainel() {
                         )}
                       </div>
                       
-                      {/* Select Fotógrafo */}
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-0.5 font-medium">📸 Fotógrafo(a) / Filmmaker</label>
                         <select 
@@ -392,7 +443,6 @@ export default function FilmmakerPainel() {
                         </select>
                       </div>
 
-                      {/* Select Roteirista */}
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-0.5 font-medium">✍️ Roteirista</label>
                         <select 
@@ -408,7 +458,6 @@ export default function FilmmakerPainel() {
                         </select>
                       </div>
 
-                      {/* Select Auxiliar */}
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-0.5 font-medium">💼 Auxiliar</label>
                         <select 
