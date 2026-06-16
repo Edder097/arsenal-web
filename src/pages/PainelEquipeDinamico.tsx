@@ -818,6 +818,50 @@ useEffect(() => {
                       </div>
                     </div>
 
+                    {/* Equipe Designada */}
+                    {(ensaio.fotografo_responsavel || ensaio.roteirista_responsavel || ensaio.auxiliar_responsavel) && (
+                      <div className="bg-slate-950/40 border border-slate-900/60 rounded-xl p-3.5 space-y-2">
+                        <span className="block text-[9px] uppercase tracking-widest text-slate-500 font-bold">
+                          👥 Equipe Designada
+                        </span>
+                        <div className="flex flex-col gap-1.5">
+                          {ensaio.fotografo_responsavel && (
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[9px] font-black text-emerald-400 shrink-0">
+                                  {ensaio.fotografo_responsavel.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-xs text-slate-300 font-medium">{ensaio.fotografo_responsavel}</span>
+                              </div>
+                              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">🎥 Filmmaker</span>
+                            </div>
+                          )}
+                          {ensaio.roteirista_responsavel && (
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-[9px] font-black text-sky-400 shrink-0">
+                                  {ensaio.roteirista_responsavel.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-xs text-slate-300 font-medium">{ensaio.roteirista_responsavel}</span>
+                              </div>
+                              <span className="text-[10px] font-bold text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded">📝 Roteirista</span>
+                            </div>
+                          )}
+                          {ensaio.auxiliar_responsavel && (
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-[9px] font-black text-amber-400 shrink-0">
+                                  {ensaio.auxiliar_responsavel.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-xs text-slate-300 font-medium">{ensaio.auxiliar_responsavel}</span>
+                              </div>
+                              <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">⚡ Auxiliar Técnico</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Links Atuais */}
                     <div className="bg-slate-950/60 border border-slate-900 rounded-xl p-3.5 space-y-2.5">
                       <span className="block text-[9px] uppercase tracking-widest text-slate-500 font-bold">
