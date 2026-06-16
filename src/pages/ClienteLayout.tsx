@@ -171,9 +171,6 @@ export default function ClienteLayout() {
 
         {/* Cabeçalho */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white to-[#0ABAB5] bg-clip-text text-transparent">
-            Arsenal
-          </h1>
           <p className="text-sm text-slate-400 mt-2">Olá, cliente da Arsenal! Siga o passo a passo para agendar seu ensaio:</p>
           
           {/* Barra de Progresso */}
