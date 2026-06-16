@@ -34,30 +34,38 @@ export default function PainelEquipeDinamico() {
   const API_URL = import.meta.env.VITE_API_URL || '';
   const BASE_URL = API_URL.endsWith('/api') ? API_URL : (API_URL ? `${API_URL}/api` : '/api');
 
-  useEffect(() => {
-    if (!usuario) return;
+useEffect(() => {
+  if (!usuario) return;
 
-    const carregarMeusEnsaios = async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/painel/meus-ensaios?nomeColaborador=${encodeURIComponent(usuario.nome)}`);
-        const dados = await res.json();
-        if (res.ok) {
-          setEnsaios(dados);
-          
-          const mapaLinks: { [key: string]: string } = {};
-          dados.forEach((e: Ensaio) => {
-            mapaLinks[`${e.id}-link_roteiro`] = e.link_roteiro || '';
-            mapaLinks[`${e.id}-link_arquivos_ensaio`] = e.link_arquivos_ensaio || '';
-            mapaLinks[`${e.id}-link_materiais_auxiliares`] = e.link_materiais_auxiliares || '';
-          });
-          setLinksEditados(mapaLinks);
-        }
-      } catch (err) {
-        console.error('Erro ao buscar ensaios:', err);
+  const carregarEnsaios = async () => {
+    try {
+      // 🟢 O PULO DO GATO: Se for o e-mail do Gabriel, puxa a rota geral. Se não, puxa filtrado por colaborador.
+      const url = usuario.email === 'gabrielafonso.arsenal@gmail.com'
+        ? `${BASE_URL}/painel/ensaios`
+        : `${BASE_URL}/painel/meus-ensaios?nomeColaborador=${encodeURIComponent(usuario.nome)}`;
+
+      const res = await fetch(url);
+      const dados = await res.json();
+      
+      if (res.ok) {
+        setEnsaios(dados);
+        
+        // Mantém sua lógica idêntica para preencher os inputs de links na tela
+        const mapaLinks: { [key: string]: string } = {};
+        dados.forEach((e: Ensaio) => {
+          mapaLinks[`${e.id}-link_roteiro`] = e.link_roteiro || '';
+          mapaLinks[`${e.id}-link_arquivos_ensaio`] = e.link_arquivos_ensaio || '';
+          mapaLinks[`${e.id}-link_materiais_auxiliares`] = e.link_materiais_auxiliares || '';
+        });
+        setLinksEditados(mapaLinks);
       }
-    };
-    carregarMeusEnsaios();
-  }, [usuario, BASE_URL]);
+    } catch (err) {
+      console.error('Erro ao buscar ensaios:', err);
+    }
+  };
+  
+  carregarEnsaios();
+}, [usuario, BASE_URL]);
 
   const lidarComLogin = async (e: React.FormEvent) => {
     e.preventDefault();
