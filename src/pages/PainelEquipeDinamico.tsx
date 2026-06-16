@@ -22,11 +22,12 @@ export default function PainelEquipeDinamico() {
   });
   
   const [emailInput, setEmailInput] = useState('');
-  const [senhaInput, setSenhaInput] = useState(''); // 🟢 ALTERAÇÃO 1: Criado o estado para armazenar a senha
+  const [senhaInput, setSenhaInput] = useState('');
   const [erroLogin, setErroLogin] = useState('');
   const [carregandoLogin, setCarregandoLogin] = useState(false);
 
   const [ensaios, setEnsaios] = useState<Ensaio[]>([]);
+  const [filtroStatus, setFiltroStatus] = useState<string>('Todos'); // 🟢 NOVO ESTADO: Filtro selecionado
   const [linksEditados, setLinksEditados] = useState<{ [key: string]: string }>({});
   const [salvandoId, setSalvandoId] = useState<number | null>(null);
 
@@ -69,7 +70,7 @@ export default function PainelEquipeDinamico() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email: emailInput,
-          senha: senhaInput // 🟢 ALTERAÇÃO 2: Agora envia e-mail E senha para o backend
+          senha: senhaInput
         }),
       });
       
@@ -92,8 +93,9 @@ export default function PainelEquipeDinamico() {
     localStorage.removeItem('arsenal_usuario');
     setUsuario(null);
     setEnsaios([]);
+    setFiltroStatus('Todos'); // Reseta o filtro no logout
     setEmailInput('');
-    setSenhaInput(''); // Limpa o campo de senha no logout por segurança
+    setSenhaInput('');
   };
 
   const lidarComMudancaInput = (ensaioId: number, campo: string, valor: string) => {
@@ -114,7 +116,7 @@ export default function PainelEquipeDinamico() {
       const dados = await res.json();
 
       if (res.ok) {
-        alert('Link updated successfully!');
+        alert('Link atualizado com sucesso!');
         setEnsaios(prev => prev.map(ens => 
           ens.id === ensaioId ? { ...ens, ...dados.ensaio } : ens
         ));
@@ -165,6 +167,12 @@ export default function PainelEquipeDinamico() {
     }
   };
 
+  // 🟢 FILTRAGEM DINÂMICA: Filtra o array original antes de renderizar na tela
+  const ensaiosFiltrados = ensaios.filter(ensaio => {
+    if (filtroStatus === 'Todos') return true;
+    return ensaio.status === filtroStatus;
+  });
+
   if (!usuario) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 antialiased font-sans">
@@ -179,7 +187,6 @@ export default function PainelEquipeDinamico() {
           </div>
           
           <form onSubmit={lidarComLogin} className="space-y-5">
-            {/* Input de E-mail */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
                 E-mail de Acesso
@@ -194,7 +201,6 @@ export default function PainelEquipeDinamico() {
               />
             </div>
 
-            {/* 🟢 ALTERAÇÃO 3: Campo visual de Senha inserido seguindo exatamente o design original */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
                 Senha de Acesso
@@ -253,190 +259,232 @@ export default function PainelEquipeDinamico() {
           <p className="text-sm text-slate-500 font-medium">Você não possui nenhum ensaio escalado no momento.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ensaios.map(ensaio => {
-            const ehRoteirista = ensaio.roteirista_responsavel === usuario.nome;
-            const ehFilmmaker = ensaio.fotografo_responsavel === usuario.nome;
-            const ehAuxiliar = ensaio.auxiliar_responsavel === usuario.nome;
-            
-            const estaFinalizado = ensaio.status === 'Concluído';
-
-            return (
-              <div 
-                key={ensaio.id} 
-                className={`bg-slate-900/40 backdrop-blur-sm border rounded-2xl p-5 shadow-xl flex flex-col justify-between gap-5 transition-all ${
-                  estaFinalizado 
-                    ? 'border-purple-500/20 opacity-80 shadow-purple-950/10' 
-                    : 'border-slate-900 hover:border-slate-800/80'
+        <>
+          {/* 🟢 BARRA DE FILTROS DINÂMICOS */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {['Todos', 'Agendado', 'Concluído', 'Cancelado'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFiltroStatus(status)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-[0.98] ${
+                  filtroStatus === status
+                    ? 'bg-white text-slate-950 border-white shadow-lg'
+                    : 'bg-slate-900/40 text-slate-400 border-slate-800/80 hover:text-slate-200 hover:border-slate-700'
                 }`}
               >
-                {/* Topo do Card */}
-                <div className="flex flex-col gap-2.5 border-b border-slate-900 pb-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-base font-bold text-slate-200 tracking-tight leading-snug">
-                      {ensaio.empresa_nome}
-                    </h3>
-                    <span className="shrink-0 bg-slate-950 text-slate-400 border border-slate-800 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
-                      ID: {ensaio.id}
-                    </span>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {estaFinalizado && (
-                      <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
-                        ✅ Finalizado
-                      </span>
-                    )}
-                    {ehRoteirista && (
-                      <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
-                        📝 Roteirista
-                      </span>
-                    )}
-                    {ehFilmmaker && (
-                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
-                        🎥 Filmmaker
-                      </span>
-                    )}
-                    {ehAuxiliar && (
-                      <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
-                        ⚡ Auxiliar Técnico
-                      </span>
-                    )}
-                  </div>
-                </div>
+                {status}
+              </button>
+            ))}
+          </div>
 
-                {/* Datas e Horas */}
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-slate-950/40 border border-slate-900/60 rounded-xl p-2.5">
-                    <span className="block text-[9px] uppercase text-slate-500 font-bold tracking-wider mb-0.5">📅 Data</span>
-                    <span className="text-slate-300 font-medium">{ensaio.data_ensaio}</span>
-                  </div>
-                  <div className="bg-slate-950/40 border border-slate-900/60 rounded-xl p-2.5">
-                    <span className="block text-[9px] uppercase text-slate-500 font-bold tracking-wider mb-0.5">⏰ Horário</span>
-                    <span className="text-slate-300 font-medium">{ensaio.hora_inicio.substring(0, 5)}</span>
-                  </div>
-                </div>
+          {/* Se o filtro selecionado não retornar nenhum item */}
+          {ensaiosFiltrados.length === 0 ? (
+            <div className="bg-slate-900/20 border border-dashed border-slate-800 rounded-2xl p-12 text-center">
+              <p className="text-sm text-slate-500 font-medium">
+                Nenhum ensaio com o status "{filtroStatus}" encontrado.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ensaiosFiltrados.map(ensaio => {
+                const ehRoteirista = ensaio.roteirista_responsavel === usuario.nome;
+                const ehFilmmaker = ensaio.fotografo_responsavel === usuario.nome;
+                const ehAuxiliar = ensaio.auxiliar_responsavel === usuario.nome;
+                
+                const estaFinalizado = ensaio.status === 'Concluído';
+                const estaCancelado = ensaio.status === 'Cancelado';
 
-                {/* Links Atuais */}
-                <div className="bg-slate-950/60 border border-slate-900 rounded-xl p-3.5 space-y-2.5">
-                  <span className="block text-[9px] uppercase tracking-widest text-slate-500 font-bold">
-                    Materiais do Ensaio
-                  </span>
-                  
-                  <div className="flex flex-col gap-2 text-xs">
-                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-900 last:border-0 last:pb-0">
-                      <span className="text-slate-400">Roteiro:</span>
-                      {ensaio.link_roteiro ? (
-                        <a href={ensaio.link_roteiro} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline font-semibold bg-blue-500/5 px-2 py-0.5 rounded border border-blue-500/10">
-                          Acessar PDF 🔗
-                        </a>
-                      ) : (
-                        <span className="text-slate-600 italic">Pendente</span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-900 last:border-0 last:pb-0">
-                      <span className="text-slate-400">Brutos/Drive:</span>
-                      {ensaio.link_arquivos_ensaio ? (
-                        <a href={ensaio.link_arquivos_ensaio} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline font-semibold bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10">
-                          Ver Mídias 🔗
-                        </a>
-                      ) : (
-                        <span className="text-slate-600 italic">Pendente</span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Mat. Auxiliares:</span>
-                      {ensaio.link_materiais_auxiliares ? (
-                        <a href={ensaio.link_materiais_auxiliares} target="_blank" rel="noreferrer" className="text-amber-400 hover:underline font-semibold bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10">
-                          Ver Anexos 🔗
-                        </a>
-                      ) : (
-                        <span className="text-slate-600 italic">Pendente</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Ações/Inputs */}
-                <div className="mt-2 pt-4 border-t border-slate-900 space-y-3.5">
-                  {ehRoteirista && (
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
-                        {estaFinalizado ? '🔒 Ensaio Concluído (Bloqueado)' : ensaio.link_roteiro ? '🔄 Substituir arquivo do Roteiro' : '📤 Subir Roteiro Oficial'}
-                      </label>
-                      <div className="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                        <input 
-                          type="file" 
-                          accept=".pdf"
-                          disabled={salvandoId === ensaio.id || estaFinalizado}
-                          onChange={(e) => lidarComUploadRoteiro(ensaio.id, e)}
-                          className={`block w-full text-xs text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 transition-all outline-none ${
-                            estaFinalizado ? 'cursor-not-allowed opacity-40' : 'file:cursor-pointer cursor-pointer'
-                          }`}
-                        />
-                        {salvandoId === ensaio.id && (
-                          <span className="text-[11px] text-blue-400 font-bold animate-pulse shrink-0">Subindo...</span>
+                return (
+                  <div 
+                    key={ensaio.id} 
+                    className={`bg-slate-900/40 backdrop-blur-sm border rounded-2xl p-5 shadow-xl flex flex-col justify-between gap-5 transition-all ${
+                      estaFinalizado 
+                        ? 'border-purple-500/20 opacity-80 shadow-purple-950/10' 
+                        : estaCancelado
+                        ? 'border-rose-500/20 opacity-60 bg-rose-950/5'
+                        : 'border-slate-900 hover:border-slate-800/80'
+                    }`}
+                  >
+                    {/* Topo do Card */}
+                    <div className="flex flex-col gap-2.5 border-b border-slate-900 pb-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-base font-bold text-slate-200 tracking-tight leading-snug">
+                          {ensaio.empresa_nome}
+                        </h3>
+                        <span className="shrink-0 bg-slate-950 text-slate-400 border border-slate-800 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+                          ID: {ensaio.id}
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {estaFinalizado && (
+                          <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                            ✅ Concluído
+                          </span>
+                        )}
+                        {estaCancelado && (
+                          <span className="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                            ❌ Cancelado
+                          </span>
+                        )}
+                        {!estaFinalizado && !estaCancelado && (
+                          <span className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                            ⏳ Agendado
+                          </span>
+                        )}
+                        
+                        {ehRoteirista && (
+                          <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
+                            📝 Roteirista
+                          </span>
+                        )}
+                        {ehFilmmaker && (
+                          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
+                            🎥 Filmmaker
+                          </span>
+                        )}
+                        {ehAuxiliar && (
+                          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
+                            ⚡ Auxiliar Técnico
+                          </span>
                         )}
                       </div>
                     </div>
-                  )}
 
-                  {ehFilmmaker && (
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
-                        {estaFinalizado ? '🔒 Entrega Bloqueada (Concluído)' : 'Entrega de Arquivos Brutos (Filmmaker)'}
-                      </label>
-                      <div className="flex gap-2">
-                        <input 
-                          type="url" 
-                          placeholder="Link do Drive ou Frame.io" 
-                          value={linksEditados[`${ensaio.id}-link_arquivos_ensaio`] || ''} 
-                          onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_arquivos_ensaio', e.target.value)}
-                          disabled={estaFinalizado}
-                          className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        />
-                        <button 
-                          onClick={() => salvarLinkNoBanco(ensaio.id, 'link_arquivos_ensaio')} 
-                          disabled={salvandoId === ensaio.id || estaFinalizado}
-                          className="bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-20 disabled:pointer-events-none"
-                        >
-                          Salvar
-                        </button>
+                    {/* Datas e Horas */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-950/40 border border-slate-900/60 rounded-xl p-2.5">
+                        <span className="block text-[9px] uppercase text-slate-500 font-bold tracking-wider mb-0.5">📅 Data</span>
+                        <span className="text-slate-300 font-medium">{ensaio.data_ensaio}</span>
+                      </div>
+                      <div className="bg-slate-950/40 border border-slate-900/60 rounded-xl p-2.5">
+                        <span className="block text-[9px] uppercase text-slate-500 font-bold tracking-wider mb-0.5">⏰ Horário</span>
+                        <span className="text-slate-300 font-medium">{ensaio.hora_inicio.substring(0, 5)}</span>
                       </div>
                     </div>
-                  )}
 
-                  {ehAuxiliar && (
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
-                        {estaFinalizado ? '🔒 Materiais Bloqueados (Concluído)' : 'Entrega de Materiais Auxiliares (Auxiliar)'}
-                      </label>
-                      <div className="flex gap-2">
-                        <input 
-                          type="url" 
-                          placeholder="Link do Material de Apoio" 
-                          value={linksEditados[`${ensaio.id}-link_materiais_auxiliares`] || ''} 
-                          onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_materiais_auxiliares', e.target.value)}
-                          disabled={estaFinalizado}
-                          className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        />
-                        <button 
-                          onClick={() => salvarLinkNoBanco(ensaio.id, 'link_materiais_auxiliares')} 
-                          disabled={salvandoId === ensaio.id || estaFinalizado}
-                          className="bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 border border-amber-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-20 disabled:pointer-events-none"
-                        >
-                          Salvar
-                        </button>
+                    {/* Links Atuais */}
+                    <div className="bg-slate-950/60 border border-slate-900 rounded-xl p-3.5 space-y-2.5">
+                      <span className="block text-[9px] uppercase tracking-widest text-slate-500 font-bold">
+                        Materiais do Ensaio
+                      </span>
+                      
+                      <div className="flex flex-col gap-2 text-xs">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-slate-900 last:border-0 last:pb-0">
+                          <span className="text-slate-400">Roteiro:</span>
+                          {ensaio.link_roteiro ? (
+                            <a href={ensaio.link_roteiro} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline font-semibold bg-blue-500/5 px-2 py-0.5 rounded border border-blue-500/10">
+                              Acessar PDF 🔗
+                            </a>
+                          ) : (
+                            <span className="text-slate-600 italic">Pendente</span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between pb-1.5 border-b border-slate-900 last:border-0 last:pb-0">
+                          <span className="text-slate-400">Brutos/Drive:</span>
+                          {ensaio.link_arquivos_ensaio ? (
+                            <a href={ensaio.link_arquivos_ensaio} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline font-semibold bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10">
+                              Ver Mídias 🔗
+                            </a>
+                          ) : (
+                            <span className="text-slate-600 italic">Pendente</span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Mat. Auxiliares:</span>
+                          {ensaio.link_materiais_auxiliares ? (
+                            <a href={ensaio.link_materiais_auxiliares} target="_blank" rel="noreferrer" className="text-amber-400 hover:underline font-semibold bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10">
+                              Ver Anexos 🔗
+                            </a>
+                          ) : (
+                            <span className="text-slate-600 italic">Pendente</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+
+                    {/* Ações/Inputs */}
+                    <div className="mt-2 pt-4 border-t border-slate-900 space-y-3.5">
+                      {ehRoteirista && (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
+                            {estaFinalizado || estaCancelado ? '🔒 Ensaio Bloqueado' : ensaio.link_roteiro ? '🔄 Substituir arquivo do Roteiro' : '📤 Subir Roteiro Oficial'}
+                          </label>
+                          <div className="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                            <input 
+                              type="file" 
+                              accept=".pdf"
+                              disabled={salvandoId === ensaio.id || estaFinalizado || estaCancelado}
+                              onChange={(e) => lidarComUploadRoteiro(ensaio.id, e)}
+                              className={`block w-full text-xs text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 transition-all outline-none ${
+                                estaFinalizado || estaCancelado ? 'cursor-not-allowed opacity-40' : 'file:cursor-pointer cursor-pointer'
+                              }`}
+                            />
+                            {salvandoId === ensaio.id && (
+                              <span className="text-[11px] text-blue-400 font-bold animate-pulse shrink-0">Subindo...</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {ehFilmmaker && (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
+                            {estaFinalizado || estaCancelado ? '🔒 Entrega Bloqueada' : 'Entrega de Arquivos Brutos (Filmmaker)'}
+                          </label>
+                          <div className="flex gap-2">
+                            <input 
+                              type="url" 
+                              placeholder="Link do Drive ou Frame.io" 
+                              value={linksEditados[`${ensaio.id}-link_arquivos_ensaio`] || ''} 
+                              onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_arquivos_ensaio', e.target.value)}
+                              disabled={estaFinalizado || estaCancelado}
+                              className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            />
+                            <button 
+                              onClick={() => salvarLinkNoBanco(ensaio.id, 'link_arquivos_ensaio')} 
+                              disabled={salvandoId === ensaio.id || estaFinalizado || estaCancelado}
+                              className="bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-20 disabled:pointer-events-none"
+                            >
+                              Salvar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {ehAuxiliar && (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
+                            {estaFinalizado || estaCancelado ? '🔒 Materiais Bloqueados' : 'Entrega de Materiais Auxiliares (Auxiliar)'}
+                          </label>
+                          <div className="flex gap-2">
+                            <input 
+                              type="url" 
+                              placeholder="Link do Material de Apoio" 
+                              value={linksEditados[`${ensaio.id}-link_materiais_auxiliares`] || ''} 
+                              onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_materiais_auxiliares', e.target.value)}
+                              disabled={estaFinalizado || estaCancelado}
+                              className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            />
+                            <button 
+                              onClick={() => salvarLinkNoBanco(ensaio.id, 'link_materiais_auxiliares')} 
+                              disabled={salvandoId === ensaio.id || estaFinalizado || estaCancelado}
+                              className="bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 border border-amber-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-20 disabled:pointer-events-none"
+                            >
+                              Salvar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
