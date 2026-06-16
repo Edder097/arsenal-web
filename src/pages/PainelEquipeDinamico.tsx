@@ -424,13 +424,82 @@ useEffect(() => {
                     )}
                   </div>
 
-                  <button
-                    onClick={irParaProximoMes}
-                    disabled={esteEhOMesAtual}
-                    className="text-slate-400 hover:text-slate-100 transition-colors p-1.5 rounded-lg hover:bg-slate-800/60 active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
-                  >
-                    Próximo →
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* BOTÃO DE EXPORTAR CSV */}
+                    {dashboardFiltrado.length > 0 && (
+                      <button
+                        onClick={() => {
+                          const nomeMes = MESES_PT[mesAtivo.mes - 1];
+
+                          // Cabeçalho do CSV
+                          const linhas: string[] = [
+                            `Dashboard Arsenal — ${nomeMes} ${mesAtivo.ano}`,
+                            '',
+                            'Integrante;Email;Empresa;Data;Horário;Papel;Status',
+                          ];
+
+                          // Uma linha por trabalho de cada membro
+                          for (const membro of dashboardFiltrado) {
+                            for (const t of membro.trabalhos) {
+                              linhas.push(
+                                [
+                                  membro.nome,
+                                  membro.email,
+                                  t.empresa_nome,
+                                  t.data_ensaio,
+                                  t.hora_inicio.substring(0, 5),
+                                  t.papel,
+                                  t.status,
+                                ].join(';')
+                              );
+                            }
+                          }
+
+                          // Linha de totais por membro
+                          linhas.push('');
+                          linhas.push('Resumo por integrante');
+                          linhas.push('Integrante;Total;Concluídos;Agendados;Filmmaker;Roteirista;Auxiliar');
+                          for (const membro of dashboardFiltrado) {
+                            const t = membro.totais;
+                            linhas.push(
+                              [
+                                membro.nome,
+                                t.total,
+                                t.concluidos,
+                                t.agendados,
+                                t.filmmaker,
+                                t.roteirista,
+                                t.auxiliar,
+                              ].join(';')
+                            );
+                          }
+
+                          // BOM para o Excel abrir UTF-8 corretamente
+                          const bom = '\uFEFF';
+                          const blob = new Blob([bom + linhas.join('\n')], {
+                            type: 'text/csv;charset=utf-8;',
+                          });
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `arsenal-equipe-${nomeMes.toLowerCase()}-${mesAtivo.ano}.csv`;
+                          link.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="text-xs font-bold text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 hover:bg-slate-800/60 px-3 py-1.5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5"
+                      >
+                        ↓ Exportar CSV
+                      </button>
+                    )}
+
+                    <button
+                      onClick={irParaProximoMes}
+                      disabled={esteEhOMesAtual}
+                      className="text-slate-400 hover:text-slate-100 transition-colors p-1.5 rounded-lg hover:bg-slate-800/60 active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      Próximo →
+                    </button>
+                  </div>
                 </div>
 
                 {/* Conteúdo filtrado */}
