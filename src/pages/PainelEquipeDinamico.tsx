@@ -15,6 +15,30 @@ interface Ensaio {
   link_materiais_auxiliares: string;
 }
 
+interface TrabalhoMembro {
+  id: number;
+  empresa_nome: string;
+  data_ensaio: string;
+  hora_inicio: string;
+  status: string;
+  papel: 'Filmmaker' | 'Roteirista' | 'Auxiliar Técnico';
+}
+
+interface MembroDashboard {
+  id: number;
+  nome: string;
+  email: string;
+  totais: {
+    total: number;
+    concluidos: number;
+    agendados: number;
+    filmmaker: number;
+    roteirista: number;
+    auxiliar: number;
+  };
+  trabalhos: TrabalhoMembro[];
+}
+
 export default function PainelEquipeDinamico() {
   const [usuario, setUsuario] = useState<{ id: number; nome: string; email: string } | null>(() => {
     const salvo = localStorage.getItem('arsenal_usuario');
@@ -30,6 +54,14 @@ export default function PainelEquipeDinamico() {
   const [filtroStatus, setFiltroStatus] = useState<string>('Todos'); // 🟢 NOVO ESTADO: Filtro selecionado
   const [linksEditados, setLinksEditados] = useState<{ [key: string]: string }>({});
   const [salvandoId, setSalvandoId] = useState<number | null>(null);
+
+  // 🟢 ESTADOS DO DASHBOARD DO GERENTE
+  const [abaPrincipal, setAbaPrincipal] = useState<'ensaios' | 'dashboard'>('ensaios');
+  const [dashboardEquipe, setDashboardEquipe] = useState<MembroDashboard[]>([]);
+  const [carregandoDashboard, setCarregandoDashboard] = useState(false);
+  const [membroExpandido, setMembroExpandido] = useState<number | null>(null);
+
+  const isGerente = usuario?.email === 'gabrielafonso.arsenal@gmail.com';
 
   const API_URL = import.meta.env.VITE_API_URL || '';
   const BASE_URL = API_URL.endsWith('/api') ? API_URL : (API_URL ? `${API_URL}/api` : '/api');
@@ -67,6 +99,24 @@ useEffect(() => {
   carregarEnsaios();
 }, [usuario, BASE_URL]);
 
+  // 🟢 CARREGA O DASHBOARD QUANDO O GERENTE ABRE ESSA ABA
+  useEffect(() => {
+    if (!isGerente || abaPrincipal !== 'dashboard') return;
+    const carregarDashboard = async () => {
+      setCarregandoDashboard(true);
+      try {
+        const res = await fetch(`${BASE_URL}/painel/dashboard/equipe`);
+        const dados = await res.json();
+        if (res.ok) setDashboardEquipe(dados);
+      } catch (err) {
+        console.error('Erro ao buscar dashboard:', err);
+      } finally {
+        setCarregandoDashboard(false);
+      }
+    };
+    carregarDashboard();
+  }, [isGerente, abaPrincipal, BASE_URL]);
+
   const lidarComLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setCarregandoLogin(true);
@@ -102,6 +152,9 @@ useEffect(() => {
     setUsuario(null);
     setEnsaios([]);
     setFiltroStatus('Todos'); // Reseta o filtro no logout
+    setAbaPrincipal('ensaios');
+    setDashboardEquipe([]);
+    setMembroExpandido(null);
     setEmailInput('');
     setSenhaInput('');
   };
@@ -245,10 +298,11 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 antialiased font-sans">
       
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8 border-b border-slate-900 pb-6">
+      {/* CABEÇALHO */}
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 border-b border-slate-900 pb-6">
         <div>
           <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-100">
-            Painel Operacional do Colaborador 🛠️
+            {isGerente ? 'Arsenal Connect — Gerente 🎬' : 'Painel Operacional do Colaborador 🛠️'}
           </h1>
           <p className="text-sm text-slate-400 mt-1">
             Bem-vindo de volta, <span className="text-slate-200 font-semibold">{usuario.nome}</span>
@@ -261,6 +315,148 @@ useEffect(() => {
           Sair do Painel
         </button>
       </div>
+
+      {/* 🟢 ABAS DO GERENTE — SÓ APARECEM PRO GERENTE */}
+      {isGerente && (
+        <div className="flex gap-2 mb-6">
+          {(['ensaios', 'dashboard'] as const).map((aba) => (
+            <button
+              key={aba}
+              onClick={() => setAbaPrincipal(aba)}
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-all active:scale-[0.98] ${
+                abaPrincipal === aba
+                  ? 'bg-white text-slate-950 border-white shadow-lg'
+                  : 'bg-slate-900/40 text-slate-400 border-slate-800/80 hover:text-slate-200 hover:border-slate-700'
+              }`}
+            >
+              {aba === 'ensaios' ? '📅 Agendamentos' : '📊 Dashboard da Equipe'}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* ABA: DASHBOARD DA EQUIPE (só gerente)              */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {isGerente && abaPrincipal === 'dashboard' && (
+        <>
+          {carregandoDashboard ? (
+            <div className="flex items-center justify-center py-24">
+              <div className="text-center space-y-3">
+                <div className="w-7 h-7 border-2 border-slate-800 border-t-slate-400 rounded-full animate-spin mx-auto" />
+                <p className="text-sm text-slate-500">Carregando dados da equipe...</p>
+              </div>
+            </div>
+          ) : dashboardEquipe.length === 0 ? (
+            <div className="bg-slate-900/20 border border-dashed border-slate-800 rounded-2xl p-12 text-center">
+              <p className="text-sm text-slate-500 font-medium">Nenhum trabalho registrado para a equipe ainda.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {dashboardEquipe.map((membro) => {
+                const expandido = membroExpandido === membro.id;
+                return (
+                  <div key={membro.id} className="bg-slate-900/40 backdrop-blur-sm border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
+                    
+                    {/* Linha do membro — clicável para expandir/colapsar */}
+                    <button
+                      onClick={() => setMembroExpandido(expandido ? null : membro.id)}
+                      className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 text-left hover:bg-slate-800/20 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-black text-slate-200 shrink-0">
+                          {membro.nome.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-100 leading-tight">{membro.nome}</p>
+                          <p className="text-[11px] text-slate-500">{membro.email}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                        <span className="bg-slate-950/60 border border-slate-800 text-slate-300 text-[11px] font-bold px-3 py-1 rounded-lg">
+                          {membro.totais.total} trabalho{membro.totais.total !== 1 ? 's' : ''}
+                        </span>
+                        {membro.totais.concluidos > 0 && (
+                          <span className="bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                            ✅ {membro.totais.concluidos} concluído{membro.totais.concluidos !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {membro.totais.agendados > 0 && (
+                          <span className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                            ⏳ {membro.totais.agendados} agendado{membro.totais.agendados !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {membro.totais.filmmaker > 0 && (
+                          <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                            🎥 {membro.totais.filmmaker}× Filmmaker
+                          </span>
+                        )}
+                        {membro.totais.roteirista > 0 && (
+                          <span className="bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                            📝 {membro.totais.roteirista}× Roteirista
+                          </span>
+                        )}
+                        {membro.totais.auxiliar > 0 && (
+                          <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                            ⚡ {membro.totais.auxiliar}× Auxiliar
+                          </span>
+                        )}
+                        <span className={`text-slate-500 text-[10px] transition-transform duration-200 ml-1 ${expandido ? 'rotate-180' : ''}`}>▼</span>
+                      </div>
+                    </button>
+
+                    {/* Lista de trabalhos (expansível) */}
+                    {expandido && (
+                      <div className="border-t border-slate-800/60 divide-y divide-slate-800/30">
+                        {membro.trabalhos.map((trabalho) => {
+                          const papelConfig = {
+                            'Filmmaker':       { cor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', emoji: '🎥' },
+                            'Roteirista':      { cor: 'text-sky-400 bg-sky-500/10 border-sky-500/20', emoji: '📝' },
+                            'Auxiliar Técnico':{ cor: 'text-amber-400 bg-amber-500/10 border-amber-500/20', emoji: '⚡' },
+                          }[trabalho.papel] ?? { cor: 'text-slate-400 bg-slate-800 border-slate-700', emoji: '•' };
+
+                          const statusCor = {
+                            'Concluído': 'text-purple-400',
+                            'Cancelado': 'text-rose-400',
+                            'Agendado':  'text-blue-400',
+                          }[trabalho.status] ?? 'text-slate-400';
+
+                          return (
+                            <div key={`${membro.id}-${trabalho.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-5 py-3 hover:bg-slate-800/10 transition-all">
+                              <div className="flex items-center gap-3">
+                                <span className="text-[10px] text-slate-700 font-bold w-7 shrink-0">#{trabalho.id}</span>
+                                <div>
+                                  <p className="text-sm font-semibold text-slate-200">{trabalho.empresa_nome}</p>
+                                  <p className="text-[11px] text-slate-500">{trabalho.data_ensaio} · {trabalho.hora_inicio.substring(0, 5)}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 pl-10 sm:pl-0">
+                                <span className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-lg ${papelConfig.cor}`}>
+                                  {papelConfig.emoji} {trabalho.papel}
+                                </span>
+                                <span className={`text-[11px] font-bold ${statusCor}`}>
+                                  {trabalho.status}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* ABA: ENSAIOS (padrão — todos os usuários)          */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {(!isGerente || abaPrincipal === 'ensaios') && (
+      <>
 
       {ensaios.length === 0 ? (
         <div className="bg-slate-900/20 border border-dashed border-slate-800 rounded-2xl p-12 text-center">
@@ -493,6 +689,9 @@ useEffect(() => {
             </div>
           )}
         </>
+      )}
+      {/* fim da aba ensaios */}
+      </>
       )}
     </div>
   );
