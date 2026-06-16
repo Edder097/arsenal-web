@@ -425,70 +425,153 @@ useEffect(() => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* BOTÃO DE EXPORTAR CSV */}
+                    {/* BOTÃO DE EXPORTAR RELATÓRIO */}
                     {dashboardFiltrado.length > 0 && (
                       <button
                         onClick={() => {
                           const nomeMes = MESES_PT[mesAtivo.mes - 1];
+                          const totalGeral = dashboardFiltrado.reduce((s, m) => s + m.totais.total, 0);
+                          const totalConcluidos = dashboardFiltrado.reduce((s, m) => s + m.totais.concluidos, 0);
 
-                          // Cabeçalho do CSV
-                          const linhas: string[] = [
-                            `Dashboard Arsenal — ${nomeMes} ${mesAtivo.ano}`,
-                            '',
-                            'Integrante;Email;Empresa;Data;Horário;Papel;Status',
-                          ];
+                          const corPapel: Record<string, string> = {
+                            'Filmmaker':        '#10b981',
+                            'Roteirista':       '#38bdf8',
+                            'Auxiliar Técnico': '#f59e0b',
+                          };
+                          const bgPapel: Record<string, string> = {
+                            'Filmmaker':        '#052e16',
+                            'Roteirista':       '#082f49',
+                            'Auxiliar Técnico': '#1c1100',
+                          };
+                          const corStatus: Record<string, string> = {
+                            'Concluído': '#a78bfa',
+                            'Agendado':  '#60a5fa',
+                            'Cancelado': '#f87171',
+                          };
 
-                          // Uma linha por trabalho de cada membro
-                          for (const membro of dashboardFiltrado) {
-                            for (const t of membro.trabalhos) {
-                              linhas.push(
-                                [
-                                  membro.nome,
-                                  membro.email,
-                                  t.empresa_nome,
-                                  t.data_ensaio,
-                                  t.hora_inicio.substring(0, 5),
-                                  t.papel,
-                                  t.status,
-                                ].join(';')
-                              );
-                            }
-                          }
+                          const cardsHtml = dashboardFiltrado.map(membro => {
+                            const trabalhoLinhas = membro.trabalhos.map((t, i) => `
+                              <tr style="background:${i % 2 === 0 ? '#0f172a' : '#0d1526'}">
+                                <td style="padding:10px 14px;color:#94a3b8;font-size:12px;font-weight:700;">#${t.id}</td>
+                                <td style="padding:10px 14px;color:#e2e8f0;font-size:13px;font-weight:600;">${t.empresa_nome}</td>
+                                <td style="padding:10px 14px;color:#94a3b8;font-size:12px;">${t.data_ensaio} · ${t.hora_inicio.substring(0,5)}</td>
+                                <td style="padding:10px 14px;">
+                                  <span style="background:${bgPapel[t.papel] ?? '#1e293b'};color:${corPapel[t.papel] ?? '#94a3b8'};border:1px solid ${corPapel[t.papel] ?? '#334155'}40;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">
+                                    ${t.papel}
+                                  </span>
+                                </td>
+                                <td style="padding:10px 14px;">
+                                  <span style="color:${corStatus[t.status] ?? '#94a3b8'};font-size:12px;font-weight:700;">${t.status}</span>
+                                </td>
+                              </tr>
+                            `).join('');
 
-                          // Linha de totais por membro
-                          linhas.push('');
-                          linhas.push('Resumo por integrante');
-                          linhas.push('Integrante;Total;Concluídos;Agendados;Filmmaker;Roteirista;Auxiliar');
-                          for (const membro of dashboardFiltrado) {
-                            const t = membro.totais;
-                            linhas.push(
-                              [
-                                membro.nome,
-                                t.total,
-                                t.concluidos,
-                                t.agendados,
-                                t.filmmaker,
-                                t.roteirista,
-                                t.auxiliar,
-                              ].join(';')
-                            );
-                          }
+                            const chips = [
+                              membro.totais.filmmaker  > 0 ? `<span style="background:#052e16;color:#10b981;border:1px solid #10b98140;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">🎥 ${membro.totais.filmmaker}× Filmmaker</span>` : '',
+                              membro.totais.roteirista > 0 ? `<span style="background:#082f49;color:#38bdf8;border:1px solid #38bdf840;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">📝 ${membro.totais.roteirista}× Roteirista</span>` : '',
+                              membro.totais.auxiliar   > 0 ? `<span style="background:#1c1100;color:#f59e0b;border:1px solid #f59e0b40;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">⚡ ${membro.totais.auxiliar}× Auxiliar</span>` : '',
+                            ].filter(Boolean).join('');
 
-                          // BOM para o Excel abrir UTF-8 corretamente
-                          const bom = '\uFEFF';
-                          const blob = new Blob([bom + linhas.join('\n')], {
-                            type: 'text/csv;charset=utf-8;',
-                          });
+                            return `
+                              <div style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;overflow:hidden;margin-bottom:20px;page-break-inside:avoid;">
+                                <div style="padding:18px 22px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                                  <div style="display:flex;align-items:center;gap:14px;">
+                                    <div style="width:40px;height:40px;border-radius:50%;background:#1e293b;border:1px solid #334155;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#e2e8f0;flex-shrink:0;">
+                                      ${membro.nome.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <p style="margin:0;font-size:15px;font-weight:800;color:#f1f5f9;">${membro.nome}</p>
+                                      <p style="margin:4px 0 0;font-size:11px;color:#64748b;">${membro.email}</p>
+                                    </div>
+                                  </div>
+                                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                    <span style="background:#1e293b;color:#cbd5e1;border:1px solid #334155;padding:4px 12px;border-radius:8px;font-size:12px;font-weight:700;">${membro.totais.total} trabalho${membro.totais.total !== 1 ? 's' : ''}</span>
+                                    ${chips}
+                                  </div>
+                                </div>
+                                <table style="width:100%;border-collapse:collapse;">
+                                  <thead>
+                                    <tr style="background:#0a0f1a;">
+                                      <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">ID</th>
+                                      <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Empresa</th>
+                                      <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Data</th>
+                                      <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Papel</th>
+                                      <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Status</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>${trabalhoLinhas}</tbody>
+                                </table>
+                              </div>
+                            `;
+                          }).join('');
+
+                          const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Arsenal — ${nomeMes} ${mesAtivo.ano}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#020817;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:40px 32px;color:#e2e8f0;}
+    @media print{
+      .no-print{display:none!important;}
+      body{background:#020817!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    }
+  </style>
+</head>
+<body>
+  <!-- BOTÃO IMPRIMIR -->
+  <div class="no-print" style="position:fixed;top:20px;right:24px;z-index:99;display:flex;gap:10px;">
+    <button onclick="window.print()" style="background:#fff;color:#0f172a;border:none;padding:10px 20px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 20px #0008;">
+      🖨️ Imprimir / Salvar PDF
+    </button>
+    <button onclick="window.close()" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:10px 16px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;">
+      ✕ Fechar
+    </button>
+  </div>
+
+  <!-- CABEÇALHO -->
+  <div style="margin-bottom:32px;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div style="width:48px;height:48px;background:#1e293b;border:1px solid #334155;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">🎬</div>
+      <div>
+        <h1 style="font-size:24px;font-weight:900;color:#f8fafc;letter-spacing:-0.5px;">Arsenal Estratégia</h1>
+        <p style="font-size:13px;color:#64748b;margin-top:2px;">Relatório de Equipe — ${nomeMes} ${mesAtivo.ano}</p>
+      </div>
+    </div>
+
+    <!-- CARDS DE RESUMO GERAL -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:8px;">
+      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px 20px;">
+        <p style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Total de trabalhos</p>
+        <p style="font-size:28px;font-weight:900;color:#f1f5f9;">${totalGeral}</p>
+      </div>
+      <div style="background:#0f172a;border:1px solid #a78bfa30;border-radius:12px;padding:16px 20px;">
+        <p style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Concluídos</p>
+        <p style="font-size:28px;font-weight:900;color:#a78bfa;">${totalConcluidos}</p>
+      </div>
+      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px 20px;">
+        <p style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Integrantes ativos</p>
+        <p style="font-size:28px;font-weight:900;color:#f1f5f9;">${dashboardFiltrado.length}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARDS POR MEMBRO -->
+  ${cardsHtml}
+
+  <p style="text-align:center;font-size:11px;color:#1e293b;margin-top:32px;">Gerado em ${new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
+</body>
+</html>`;
+
+                          const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
                           const url = URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = `arsenal-equipe-${nomeMes.toLowerCase()}-${mesAtivo.ano}.csv`;
-                          link.click();
-                          URL.revokeObjectURL(url);
+                          window.open(url, '_blank');
+                          setTimeout(() => URL.revokeObjectURL(url), 60000);
                         }}
                         className="text-xs font-bold text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 hover:bg-slate-800/60 px-3 py-1.5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5"
                       >
-                        ↓ Exportar CSV
+                        ↓ Exportar Relatório
                       </button>
                     )}
 
