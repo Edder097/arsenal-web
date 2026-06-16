@@ -153,10 +153,6 @@ export default function FilmmakerPainel() {
     }));
   };
 
-  const fotografosDisponiveis = equipe.filter(m => m.eh_fotografo === true);
-  const roteiristasDisponiveis = equipe.filter(m => m.eh_roteirista === true);
-  const auxiliaresDisponiveis = equipe.filter(m => m.eh_auxiliar === true);
-
   const ensaiosFiltrados = ensaios.filter(ensaio => {
     const atendeProfissional = !filtroProfissional || (
       ensaio.fotografo_responsavel === filtroProfissional ||
@@ -196,7 +192,7 @@ export default function FilmmakerPainel() {
             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white to-[#0ABAB5] bg-clip-text text-transparent">
               Cronograma de Production
             </h1>
-            <p className="text-slate-400 text-sm mt-1">Painel operational para filmmakers e editores do Arsenal Connect</p>
+            <p className="text-slate-400 text-sm mt-1">Painel operacional para filmmakers e editores do Arsenal Connect</p>
           </div>
         </div>
         <button 
@@ -360,7 +356,7 @@ export default function FilmmakerPainel() {
                       </div>
                     )}
 
-                    {/* 🚀 NOVA SEÇÃO: Status dos Entregáveis / Links salvos */}
+                    {/* Status dos Entregáveis / Links salvos */}
                     <div className="mb-5 bg-slate-950/40 border border-slate-850 rounded-lg p-3 space-y-2">
                       <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">
                         Progresso de Entrega / Links
@@ -437,7 +433,7 @@ export default function FilmmakerPainel() {
                           className="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-slate-200 focus:outline-none focus:border-[#0ABAB5] appearance-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
                           <option value="">Selecione um profissional...</option>
-                          {fotografosDisponiveis.map(f => (
+                          {equipe.map(f => (
                             <option key={f.id} value={f.nome}>{f.nome}</option>
                           ))}
                         </select>
@@ -452,7 +448,7 @@ export default function FilmmakerPainel() {
                           className="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-slate-200 focus:outline-none focus:border-[#0ABAB5] appearance-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
                           <option value="">Selecione um profissional...</option>
-                          {roteiristasDisponiveis.map(r => (
+                          {equipe.map(r => (
                             <option key={r.id} value={r.nome}>{r.nome}</option>
                           ))}
                         </select>
@@ -467,7 +463,7 @@ export default function FilmmakerPainel() {
                           className="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-slate-200 focus:outline-none focus:border-[#0ABAB5] appearance-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
                           <option value="">Selecione um profissional...</option>
-                          {auxiliaresDisponiveis.map(a => (
+                          {equipe.map(a => (
                             <option key={a.id} value={a.nome}>{a.nome}</option>
                           ))}
                         </select>
@@ -494,7 +490,7 @@ export default function FilmmakerPainel() {
                     <a 
                       href={`https://wa.me/${ensaio.contato_telefone}`}
                       target="_blank"
-                      rel="noreferrer"
+                      with-rel="noreferrer"
                       className="text-center text-xs py-2 bg-slate-950 hover:bg-slate-850 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg font-medium transition-all"
                     >
                       💬 Chamar no WhatsApp
