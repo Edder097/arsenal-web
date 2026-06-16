@@ -22,6 +22,7 @@ export default function PainelEquipeDinamico() {
   });
   
   const [emailInput, setEmailInput] = useState('');
+  const [senhaInput, setSenhaInput] = useState(''); // 🟢 ALTERAÇÃO 1: Criado o estado para armazenar a senha
   const [erroLogin, setErroLogin] = useState('');
   const [carregandoLogin, setCarregandoLogin] = useState(false);
 
@@ -66,7 +67,10 @@ export default function PainelEquipeDinamico() {
       const res = await fetch(`${BASE_URL}/painel/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailInput }),
+        body: JSON.stringify({ 
+          email: emailInput,
+          senha: senhaInput // 🟢 ALTERAÇÃO 2: Agora envia e-mail E senha para o backend
+        }),
       });
       
       const dados = await res.json();
@@ -89,6 +93,7 @@ export default function PainelEquipeDinamico() {
     setUsuario(null);
     setEnsaios([]);
     setEmailInput('');
+    setSenhaInput(''); // Limpa o campo de senha no logout por segurança
   };
 
   const lidarComMudancaInput = (ensaioId: number, campo: string, valor: string) => {
@@ -109,8 +114,7 @@ export default function PainelEquipeDinamico() {
       const dados = await res.json();
 
       if (res.ok) {
-        alert('Link atualizado com sucesso!');
-        // 🟢 ATUALIZAÇÃO INTELIGENTE: Mescla o ensaio retornado (com o novo status vindo do back)
+        alert('Link updated successfully!');
         setEnsaios(prev => prev.map(ens => 
           ens.id === ensaioId ? { ...ens, ...dados.ensaio } : ens
         ));
@@ -175,6 +179,7 @@ export default function PainelEquipeDinamico() {
           </div>
           
           <form onSubmit={lidarComLogin} className="space-y-5">
+            {/* Input de E-mail */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
                 E-mail de Acesso
@@ -185,6 +190,21 @@ export default function PainelEquipeDinamico() {
                 placeholder="seu.email@empresa.com"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
+                className="w-full bg-slate-950/60 border border-slate-800 focus:border-slate-600 focus:ring-1 focus:ring-slate-600 text-sm text-slate-100 px-4 py-3 rounded-xl placeholder-slate-700 outline-none transition-all"
+              />
+            </div>
+
+            {/* 🟢 ALTERAÇÃO 3: Campo visual de Senha inserido seguindo exatamente o design original */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
+                Senha de Acesso
+              </label>
+              <input 
+                type="password" 
+                required
+                placeholder="••••••••"
+                value={senhaInput}
+                onChange={(e) => setSenhaInput(e.target.value)}
                 className="w-full bg-slate-950/60 border border-slate-800 focus:border-slate-600 focus:ring-1 focus:ring-slate-600 text-sm text-slate-100 px-4 py-3 rounded-xl placeholder-slate-700 outline-none transition-all"
               />
             </div>
@@ -239,7 +259,6 @@ export default function PainelEquipeDinamico() {
             const ehFilmmaker = ensaio.fotografo_responsavel === usuario.nome;
             const ehAuxiliar = ensaio.auxiliar_responsavel === usuario.nome;
             
-            // 🟢 VERIFICADOR DE STATUS DE CONCLUSÃO
             const estaFinalizado = ensaio.status === 'Concluído';
 
             return (
@@ -251,7 +270,7 @@ export default function PainelEquipeDinamico() {
                     : 'border-slate-900 hover:border-slate-800/80'
                 }`}
               >
-                {/* 1. TOPO: Identificação e Funções */}
+                {/* Topo do Card */}
                 <div className="flex flex-col gap-2.5 border-b border-slate-900 pb-4">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-base font-bold text-slate-200 tracking-tight leading-snug">
@@ -262,9 +281,7 @@ export default function PainelEquipeDinamico() {
                     </span>
                   </div>
                   
-                  {/* Badges de Atribuição e Status Geral */}
                   <div className="flex flex-wrap gap-1.5 mt-1">
-                    {/* 🟢 BADGE EXCLUSIVO DE CONCLUÍDO */}
                     {estaFinalizado && (
                       <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
                         ✅ Finalizado
@@ -288,7 +305,7 @@ export default function PainelEquipeDinamico() {
                   </div>
                 </div>
 
-                {/* 2. INFOS DE METADADOS */}
+                {/* Datas e Horas */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="bg-slate-950/40 border border-slate-900/60 rounded-xl p-2.5">
                     <span className="block text-[9px] uppercase text-slate-500 font-bold tracking-wider mb-0.5">📅 Data</span>
@@ -300,14 +317,13 @@ export default function PainelEquipeDinamico() {
                   </div>
                 </div>
 
-                {/* 3. MONITOR DE ENTREGAS (LINKS ATUAIS SEMPRE CLICÁVEIS) */}
+                {/* Links Atuais */}
                 <div className="bg-slate-950/60 border border-slate-900 rounded-xl p-3.5 space-y-2.5">
                   <span className="block text-[9px] uppercase tracking-widest text-slate-500 font-bold">
                     Materiais do Ensaio
                   </span>
                   
                   <div className="flex flex-col gap-2 text-xs">
-                    {/* Linha Roteiro */}
                     <div className="flex items-center justify-between pb-1.5 border-b border-slate-900 last:border-0 last:pb-0">
                       <span className="text-slate-400">Roteiro:</span>
                       {ensaio.link_roteiro ? (
@@ -319,7 +335,6 @@ export default function PainelEquipeDinamico() {
                       )}
                     </div>
 
-                    {/* Linha Brutos */}
                     <div className="flex items-center justify-between pb-1.5 border-b border-slate-900 last:border-0 last:pb-0">
                       <span className="text-slate-400">Brutos/Drive:</span>
                       {ensaio.link_arquivos_ensaio ? (
@@ -331,10 +346,9 @@ export default function PainelEquipeDinamico() {
                       )}
                     </div>
 
-                    {/* Linha Auxiliares */}
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">Mat. Auxiliares:</span>
-                      {ensaio.link_materiais_auxiliares || ensaio.link_materiais_auxiliares ? (
+                      {ensaio.link_materiais_auxiliares ? (
                         <a href={ensaio.link_materiais_auxiliares} target="_blank" rel="noreferrer" className="text-amber-400 hover:underline font-semibold bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10">
                           Ver Anexos 🔗
                         </a>
@@ -345,16 +359,14 @@ export default function PainelEquipeDinamico() {
                   </div>
                 </div>
 
-                {/* 4. SEÇÃO DINÂMICA DE INPUTS (BLOQUEADA SE FOR CONCLUÍDO) */}
+                {/* Ações/Inputs */}
                 <div className="mt-2 pt-4 border-t border-slate-900 space-y-3.5">
-                  
-                  {/* INPUT DO ROTEIRISTA */}
                   {ehRoteirista && (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
                         {estaFinalizado ? '🔒 Ensaio Concluído (Bloqueado)' : ensaio.link_roteiro ? '🔄 Substituir arquivo do Roteiro' : '📤 Subir Roteiro Oficial'}
                       </label>
-                      <div className="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800 opacity-100">
+                      <div className="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
                         <input 
                           type="file" 
                           accept=".pdf"
@@ -371,7 +383,6 @@ export default function PainelEquipeDinamico() {
                     </div>
                   )}
 
-                  {/* INPUT DO FILMMAKER */}
                   {ehFilmmaker && (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
@@ -397,7 +408,6 @@ export default function PainelEquipeDinamico() {
                     </div>
                   )}
 
-                  {/* INPUT DO AUXILIAR */}
                   {ehAuxiliar && (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
