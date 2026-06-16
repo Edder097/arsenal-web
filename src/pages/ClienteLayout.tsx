@@ -161,7 +161,7 @@ export default function ClienteLayout() {
           <img 
             src="/Arsenal.png" 
             alt="Logo Arsenal" 
-            className="h-14 w-auto object-contain"
+            className="h-20 w-auto object-contain"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
               console.warn("Coloque o arquivo logo.png dentro da pasta public do seu projeto.");
