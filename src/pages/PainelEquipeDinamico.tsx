@@ -61,6 +61,13 @@ export default function PainelEquipeDinamico() {
   const [carregandoDashboard, setCarregandoDashboard] = useState(false);
   const [membroExpandido, setMembroExpandido] = useState<number | null>(null);
 
+  // Filtro de mês: começa no mês atual
+  const hoje = new Date();
+  const [mesAtivo, setMesAtivo] = useState<{ mes: number; ano: number }>({
+    mes: hoje.getMonth() + 1, // 1–12
+    ano: hoje.getFullYear(),
+  });
+
   const isGerente = usuario?.email === 'gabrielafonso.arsenal@gmail.com';
 
   const API_URL = import.meta.env.VITE_API_URL || '';
@@ -155,6 +162,8 @@ useEffect(() => {
     setAbaPrincipal('ensaios');
     setDashboardEquipe([]);
     setMembroExpandido(null);
+    const agora = new Date();
+    setMesAtivo({ mes: agora.getMonth() + 1, ano: agora.getFullYear() });
     setEmailInput('');
     setSenhaInput('');
   };
@@ -340,115 +349,205 @@ useEffect(() => {
       {/* ═══════════════════════════════════════════════════ */}
       {isGerente && abaPrincipal === 'dashboard' && (
         <>
-          {carregandoDashboard ? (
-            <div className="flex items-center justify-center py-24">
-              <div className="text-center space-y-3">
-                <div className="w-7 h-7 border-2 border-slate-800 border-t-slate-400 rounded-full animate-spin mx-auto" />
-                <p className="text-sm text-slate-500">Carregando dados da equipe...</p>
-              </div>
-            </div>
-          ) : dashboardEquipe.length === 0 ? (
-            <div className="bg-slate-900/20 border border-dashed border-slate-800 rounded-2xl p-12 text-center">
-              <p className="text-sm text-slate-500 font-medium">Nenhum trabalho registrado para a equipe ainda.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {dashboardEquipe.map((membro) => {
-                const expandido = membroExpandido === membro.id;
-                return (
-                  <div key={membro.id} className="bg-slate-900/40 backdrop-blur-sm border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
-                    
-                    {/* Linha do membro — clicável para expandir/colapsar */}
-                    <button
-                      onClick={() => setMembroExpandido(expandido ? null : membro.id)}
-                      className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 text-left hover:bg-slate-800/20 transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-black text-slate-200 shrink-0">
-                          {membro.nome.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-100 leading-tight">{membro.nome}</p>
-                          <p className="text-[11px] text-slate-500">{membro.email}</p>
-                        </div>
-                      </div>
+          {/* NAVEGADOR DE MÊS */}
+          {(() => {
+            const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                        <span className="bg-slate-950/60 border border-slate-800 text-slate-300 text-[11px] font-bold px-3 py-1 rounded-lg">
-                          {membro.totais.total} trabalho{membro.totais.total !== 1 ? 's' : ''}
-                        </span>
-                        {membro.totais.concluidos > 0 && (
-                          <span className="bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[11px] font-bold px-3 py-1 rounded-lg">
-                            ✅ {membro.totais.concluidos} concluído{membro.totais.concluidos !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                        {membro.totais.agendados > 0 && (
-                          <span className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-bold px-3 py-1 rounded-lg">
-                            ⏳ {membro.totais.agendados} agendado{membro.totais.agendados !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                        {membro.totais.filmmaker > 0 && (
-                          <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-lg">
-                            🎥 {membro.totais.filmmaker}× Filmmaker
-                          </span>
-                        )}
-                        {membro.totais.roteirista > 0 && (
-                          <span className="bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[11px] font-bold px-3 py-1 rounded-lg">
-                            📝 {membro.totais.roteirista}× Roteirista
-                          </span>
-                        )}
-                        {membro.totais.auxiliar > 0 && (
-                          <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-bold px-3 py-1 rounded-lg">
-                            ⚡ {membro.totais.auxiliar}× Auxiliar
-                          </span>
-                        )}
-                        <span className={`text-slate-500 text-[10px] transition-transform duration-200 ml-1 ${expandido ? 'rotate-180' : ''}`}>▼</span>
-                      </div>
-                    </button>
+            const irParaMesAnterior = () => {
+              setMembroExpandido(null);
+              setMesAtivo(prev => {
+                if (prev.mes === 1) return { mes: 12, ano: prev.ano - 1 };
+                return { mes: prev.mes - 1, ano: prev.ano };
+              });
+            };
 
-                    {/* Lista de trabalhos (expansível) */}
-                    {expandido && (
-                      <div className="border-t border-slate-800/60 divide-y divide-slate-800/30">
-                        {membro.trabalhos.map((trabalho) => {
-                          const papelConfig = {
-                            'Filmmaker':       { cor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', emoji: '🎥' },
-                            'Roteirista':      { cor: 'text-sky-400 bg-sky-500/10 border-sky-500/20', emoji: '📝' },
-                            'Auxiliar Técnico':{ cor: 'text-amber-400 bg-amber-500/10 border-amber-500/20', emoji: '⚡' },
-                          }[trabalho.papel] ?? { cor: 'text-slate-400 bg-slate-800 border-slate-700', emoji: '•' };
+            const irParaProximoMes = () => {
+              setMembroExpandido(null);
+              setMesAtivo(prev => {
+                if (prev.mes === 12) return { mes: 1, ano: prev.ano + 1 };
+                return { mes: prev.mes + 1, ano: prev.ano };
+              });
+            };
 
-                          const statusCor = {
-                            'Concluído': 'text-purple-400',
-                            'Cancelado': 'text-rose-400',
-                            'Agendado':  'text-blue-400',
-                          }[trabalho.status] ?? 'text-slate-400';
+            const esteEhOMesAtual =
+              mesAtivo.mes === hoje.getMonth() + 1 &&
+              mesAtivo.ano === hoje.getFullYear();
 
-                          return (
-                            <div key={`${membro.id}-${trabalho.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-5 py-3 hover:bg-slate-800/10 transition-all">
-                              <div className="flex items-center gap-3">
-                                <span className="text-[10px] text-slate-700 font-bold w-7 shrink-0">#{trabalho.id}</span>
-                                <div>
-                                  <p className="text-sm font-semibold text-slate-200">{trabalho.empresa_nome}</p>
-                                  <p className="text-[11px] text-slate-500">{trabalho.data_ensaio} · {trabalho.hora_inicio.substring(0, 5)}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 pl-10 sm:pl-0">
-                                <span className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-lg ${papelConfig.cor}`}>
-                                  {papelConfig.emoji} {trabalho.papel}
-                                </span>
-                                <span className={`text-[11px] font-bold ${statusCor}`}>
-                                  {trabalho.status}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+            // Filtra os trabalhos de cada membro para o mês/ano ativo
+            // data_ensaio vem no formato "DD/MM/YYYY" do backend
+            const dashboardFiltrado = dashboardEquipe
+              .map((membro) => {
+                const trabalhosFiltrados = membro.trabalhos.filter((t) => {
+                  const partes = t.data_ensaio.split('/');
+                  if (partes.length !== 3) return false;
+                  const mesTrab = parseInt(partes[1], 10);
+                  const anoTrab = parseInt(partes[2], 10);
+                  return mesTrab === mesAtivo.mes && anoTrab === mesAtivo.ano;
+                });
+
+                const totais = trabalhosFiltrados.reduce(
+                  (acc, t) => {
+                    acc.total++;
+                    if (t.status === 'Concluído') acc.concluidos++;
+                    if (t.status === 'Agendado') acc.agendados++;
+                    if (t.papel === 'Filmmaker') acc.filmmaker++;
+                    if (t.papel === 'Roteirista') acc.roteirista++;
+                    if (t.papel === 'Auxiliar Técnico') acc.auxiliar++;
+                    return acc;
+                  },
+                  { total: 0, concluidos: 0, agendados: 0, filmmaker: 0, roteirista: 0, auxiliar: 0 }
+                );
+
+                return { ...membro, trabalhos: trabalhosFiltrados, totais };
+              })
+              .filter((m) => m.totais.total > 0);
+
+            return (
+              <>
+                {/* Barra de navegação de mês */}
+                <div className="flex items-center justify-between mb-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl px-5 py-3.5">
+                  <button
+                    onClick={irParaMesAnterior}
+                    className="text-slate-400 hover:text-slate-100 transition-colors p-1.5 rounded-lg hover:bg-slate-800/60 active:scale-95"
+                  >
+                    ← Anterior
+                  </button>
+
+                  <div className="text-center">
+                    <p className="text-base font-black text-slate-100 tracking-tight">
+                      {MESES_PT[mesAtivo.mes - 1]} {mesAtivo.ano}
+                    </p>
+                    {esteEhOMesAtual && (
+                      <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
+                        • mês atual
+                      </span>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          )}
+
+                  <button
+                    onClick={irParaProximoMes}
+                    disabled={esteEhOMesAtual}
+                    className="text-slate-400 hover:text-slate-100 transition-colors p-1.5 rounded-lg hover:bg-slate-800/60 active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    Próximo →
+                  </button>
+                </div>
+
+                {/* Conteúdo filtrado */}
+                {carregandoDashboard ? (
+                  <div className="flex items-center justify-center py-24">
+                    <div className="text-center space-y-3">
+                      <div className="w-7 h-7 border-2 border-slate-800 border-t-slate-400 rounded-full animate-spin mx-auto" />
+                      <p className="text-sm text-slate-500">Carregando dados da equipe...</p>
+                    </div>
+                  </div>
+                ) : dashboardFiltrado.length === 0 ? (
+                  <div className="bg-slate-900/20 border border-dashed border-slate-800 rounded-2xl p-12 text-center">
+                    <p className="text-sm text-slate-500 font-medium">
+                      Nenhum trabalho em {MESES_PT[mesAtivo.mes - 1].toLowerCase()} de {mesAtivo.ano}.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {dashboardFiltrado.map((membro) => {
+                      const expandido = membroExpandido === membro.id;
+                      return (
+                        <div key={membro.id} className="bg-slate-900/40 backdrop-blur-sm border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
+                          
+                          {/* Linha do membro — clicável para expandir/colapsar */}
+                          <button
+                            onClick={() => setMembroExpandido(expandido ? null : membro.id)}
+                            className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 text-left hover:bg-slate-800/20 transition-all"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-black text-slate-200 shrink-0">
+                                {membro.nome.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-slate-100 leading-tight">{membro.nome}</p>
+                                <p className="text-[11px] text-slate-500">{membro.email}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                              <span className="bg-slate-950/60 border border-slate-800 text-slate-300 text-[11px] font-bold px-3 py-1 rounded-lg">
+                                {membro.totais.total} trabalho{membro.totais.total !== 1 ? 's' : ''}
+                              </span>
+                              {membro.totais.concluidos > 0 && (
+                                <span className="bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                                  ✅ {membro.totais.concluidos} concluído{membro.totais.concluidos !== 1 ? 's' : ''}
+                                </span>
+                              )}
+                              {membro.totais.agendados > 0 && (
+                                <span className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                                  ⏳ {membro.totais.agendados} agendado{membro.totais.agendados !== 1 ? 's' : ''}
+                                </span>
+                              )}
+                              {membro.totais.filmmaker > 0 && (
+                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                                  🎥 {membro.totais.filmmaker}× Filmmaker
+                                </span>
+                              )}
+                              {membro.totais.roteirista > 0 && (
+                                <span className="bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                                  📝 {membro.totais.roteirista}× Roteirista
+                                </span>
+                              )}
+                              {membro.totais.auxiliar > 0 && (
+                                <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-bold px-3 py-1 rounded-lg">
+                                  ⚡ {membro.totais.auxiliar}× Auxiliar
+                                </span>
+                              )}
+                              <span className={`text-slate-500 text-[10px] transition-transform duration-200 ml-1 ${expandido ? 'rotate-180' : ''}`}>▼</span>
+                            </div>
+                          </button>
+
+                          {/* Lista de trabalhos (expansível) */}
+                          {expandido && (
+                            <div className="border-t border-slate-800/60 divide-y divide-slate-800/30">
+                              {membro.trabalhos.map((trabalho) => {
+                                const papelConfig = {
+                                  'Filmmaker':        { cor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', emoji: '🎥' },
+                                  'Roteirista':       { cor: 'text-sky-400 bg-sky-500/10 border-sky-500/20', emoji: '📝' },
+                                  'Auxiliar Técnico': { cor: 'text-amber-400 bg-amber-500/10 border-amber-500/20', emoji: '⚡' },
+                                }[trabalho.papel] ?? { cor: 'text-slate-400 bg-slate-800 border-slate-700', emoji: '•' };
+
+                                const statusCor = {
+                                  'Concluído': 'text-purple-400',
+                                  'Cancelado': 'text-rose-400',
+                                  'Agendado':  'text-blue-400',
+                                }[trabalho.status] ?? 'text-slate-400';
+
+                                return (
+                                  <div key={`${membro.id}-${trabalho.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-5 py-3 hover:bg-slate-800/10 transition-all">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-[10px] text-slate-700 font-bold w-7 shrink-0">#{trabalho.id}</span>
+                                      <div>
+                                        <p className="text-sm font-semibold text-slate-200">{trabalho.empresa_nome}</p>
+                                        <p className="text-[11px] text-slate-500">{trabalho.data_ensaio} · {trabalho.hora_inicio.substring(0, 5)}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 pl-10 sm:pl-0">
+                                      <span className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-lg ${papelConfig.cor}`}>
+                                        {papelConfig.emoji} {trabalho.papel}
+                                      </span>
+                                      <span className={`text-[11px] font-bold ${statusCor}`}>
+                                        {trabalho.status}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </>
       )}
 
