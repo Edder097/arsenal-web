@@ -29,7 +29,6 @@ export default function PainelEquipeDinamico() {
   const [linksEditados, setLinksEditados] = useState<{ [key: string]: string }>({});
   const [salvandoId, setSalvandoId] = useState<number | null>(null);
 
-  // 🛡️ CONFIGURAÇÃO BLINDADA DE URL: Evita a duplicidade de /api/api
   const API_URL = import.meta.env.VITE_API_URL || '';
   const BASE_URL = API_URL.endsWith('/api') ? API_URL : (API_URL ? `${API_URL}/api` : '/api');
 
@@ -107,10 +106,13 @@ export default function PainelEquipeDinamico() {
         body: JSON.stringify({ [campo]: valorDoLink })
       });
 
+      const dados = await res.json();
+
       if (res.ok) {
         alert('Link atualizado com sucesso!');
+        // 🟢 ATUALIZAÇÃO INTELIGENTE: Mescla o ensaio retornado (com o novo status vindo do back)
         setEnsaios(prev => prev.map(ens => 
-          ens.id === ensaioId ? { ...ens, [campo]: valorDoLink } : ens
+          ens.id === ensaioId ? { ...ens, ...dados.ensaio } : ens
         ));
       } else {
         alert('Erro ao salvar o link.');
@@ -128,14 +130,12 @@ export default function PainelEquipeDinamico() {
     if (!arquivos || arquivos.length === 0) return;
 
     const arquivoSelecionado = arquivos[0];
-
     if (arquivoSelecionado.type !== 'application/pdf') {
       alert('Por favor, selecione apenas arquivos no formato PDF.');
       return;
     }
 
     setSalvandoId(ensaioId);
-
     const formData = new FormData();
     formData.append('roteiro', arquivoSelecionado);
 
@@ -161,7 +161,6 @@ export default function PainelEquipeDinamico() {
     }
   };
 
-  // 🔑 TELA DE LOGIN PREMIUM
   if (!usuario) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 antialiased font-sans">
@@ -209,11 +208,9 @@ export default function PainelEquipeDinamico() {
     );
   }
 
-  // 🖥️ PAINEL PRINCIPAL REESTRUTURADO EM CARDS
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 antialiased font-sans">
       
-      {/* HEADER DO CONTEXTO */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8 border-b border-slate-900 pb-6">
         <div>
           <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-100">
@@ -236,17 +233,23 @@ export default function PainelEquipeDinamico() {
           <p className="text-sm text-slate-500 font-medium">Você não possui nenhum ensaio escalado no momento.</p>
         </div>
       ) : (
-        /* GRID DE CARDS INTELIGENTES */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {ensaios.map(ensaio => {
             const ehRoteirista = ensaio.roteirista_responsavel === usuario.nome;
             const ehFilmmaker = ensaio.fotografo_responsavel === usuario.nome;
             const ehAuxiliar = ensaio.auxiliar_responsavel === usuario.nome;
+            
+            // 🟢 VERIFICADOR DE STATUS DE CONCLUSÃO
+            const estaFinalizado = ensaio.status === 'Concluído';
 
             return (
               <div 
                 key={ensaio.id} 
-                className="bg-slate-900/40 backdrop-blur-sm border border-slate-900 rounded-2xl p-5 shadow-xl flex flex-col justify-between gap-5 transition-all hover:border-slate-800/80"
+                className={`bg-slate-900/40 backdrop-blur-sm border rounded-2xl p-5 shadow-xl flex flex-col justify-between gap-5 transition-all ${
+                  estaFinalizado 
+                    ? 'border-purple-500/20 opacity-80 shadow-purple-950/10' 
+                    : 'border-slate-900 hover:border-slate-800/80'
+                }`}
               >
                 {/* 1. TOPO: Identificação e Funções */}
                 <div className="flex flex-col gap-2.5 border-b border-slate-900 pb-4">
@@ -259,8 +262,14 @@ export default function PainelEquipeDinamico() {
                     </span>
                   </div>
                   
-                  {/* Badges de Atribuição do usuário logado */}
+                  {/* Badges de Atribuição e Status Geral */}
                   <div className="flex flex-wrap gap-1.5 mt-1">
+                    {/* 🟢 BADGE EXCLUSIVO DE CONCLUÍDO */}
+                    {estaFinalizado && (
+                      <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                        ✅ Finalizado
+                      </span>
+                    )}
                     {ehRoteirista && (
                       <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
                         📝 Roteirista
@@ -291,7 +300,7 @@ export default function PainelEquipeDinamico() {
                   </div>
                 </div>
 
-                {/* 3. MONITOR DE ENTREGAS (LINKS ATUAIS) */}
+                {/* 3. MONITOR DE ENTREGAS (LINKS ATUAIS SEMPRE CLICÁVEIS) */}
                 <div className="bg-slate-950/60 border border-slate-900 rounded-xl p-3.5 space-y-2.5">
                   <span className="block text-[9px] uppercase tracking-widest text-slate-500 font-bold">
                     Materiais do Ensaio
@@ -325,7 +334,7 @@ export default function PainelEquipeDinamico() {
                     {/* Linha Auxiliares */}
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">Mat. Auxiliares:</span>
-                      {ensaio.link_materiais_auxiliares ? (
+                      {ensaio.link_materiais_auxiliares || ensaio.link_materiais_auxiliares ? (
                         <a href={ensaio.link_materiais_auxiliares} target="_blank" rel="noreferrer" className="text-amber-400 hover:underline font-semibold bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10">
                           Ver Anexos 🔗
                         </a>
@@ -336,22 +345,24 @@ export default function PainelEquipeDinamico() {
                   </div>
                 </div>
 
-                {/* 4. SEÇÃO DINÂMICA DE INPUTS BASEADA NA FUNÇÃO */}
+                {/* 4. SEÇÃO DINÂMICA DE INPUTS (BLOQUEADA SE FOR CONCLUÍDO) */}
                 <div className="mt-2 pt-4 border-t border-slate-900 space-y-3.5">
                   
                   {/* INPUT DO ROTEIRISTA */}
                   {ehRoteirista && (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
-                        {ensaio.link_roteiro ? '🔄 Substituir arquivo do Roteiro' : '📤 Subir Roteiro Oficial'}
+                        {estaFinalizado ? '🔒 Ensaio Concluído (Bloqueado)' : ensaio.link_roteiro ? '🔄 Substituir arquivo do Roteiro' : '📤 Subir Roteiro Oficial'}
                       </label>
-                      <div className="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                      <div className="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800 opacity-100">
                         <input 
                           type="file" 
                           accept=".pdf"
-                          disabled={salvandoId === ensaio.id}
+                          disabled={salvandoId === ensaio.id || estaFinalizado}
                           onChange={(e) => lidarComUploadRoteiro(ensaio.id, e)}
-                          className="block w-full text-xs text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 file:cursor-pointer cursor-pointer transition-all outline-none"
+                          className={`block w-full text-xs text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 transition-all outline-none ${
+                            estaFinalizado ? 'cursor-not-allowed opacity-40' : 'file:cursor-pointer cursor-pointer'
+                          }`}
                         />
                         {salvandoId === ensaio.id && (
                           <span className="text-[11px] text-blue-400 font-bold animate-pulse shrink-0">Subindo...</span>
@@ -364,7 +375,7 @@ export default function PainelEquipeDinamico() {
                   {ehFilmmaker && (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
-                        Entrega de Arquivos Brutos (Filmmaker)
+                        {estaFinalizado ? '🔒 Entrega Bloqueada (Concluído)' : 'Entrega de Arquivos Brutos (Filmmaker)'}
                       </label>
                       <div className="flex gap-2">
                         <input 
@@ -372,12 +383,13 @@ export default function PainelEquipeDinamico() {
                           placeholder="Link do Drive ou Frame.io" 
                           value={linksEditados[`${ensaio.id}-link_arquivos_ensaio`] || ''} 
                           onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_arquivos_ensaio', e.target.value)}
-                          className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all"
+                          disabled={estaFinalizado}
+                          className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         />
                         <button 
                           onClick={() => salvarLinkNoBanco(ensaio.id, 'link_arquivos_ensaio')} 
-                          disabled={salvandoId === ensaio.id}
-                          className="bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-50"
+                          disabled={salvandoId === ensaio.id || estaFinalizado}
+                          className="bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-20 disabled:pointer-events-none"
                         >
                           Salvar
                         </button>
@@ -389,7 +401,7 @@ export default function PainelEquipeDinamico() {
                   {ehAuxiliar && (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">
-                        Entrega de Materiais Auxiliares (Auxiliar)
+                        {estaFinalizado ? '🔒 Materiais Bloqueados (Concluído)' : 'Entrega de Materiais Auxiliares (Auxiliar)'}
                       </label>
                       <div className="flex gap-2">
                         <input 
@@ -397,12 +409,13 @@ export default function PainelEquipeDinamico() {
                           placeholder="Link do Material de Apoio" 
                           value={linksEditados[`${ensaio.id}-link_materiais_auxiliares`] || ''} 
                           onChange={(e) => lidarComMudancaInput(ensaio.id, 'link_materiais_auxiliares', e.target.value)}
-                          className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all"
+                          disabled={estaFinalizado}
+                          className="flex-1 bg-slate-950 border border-slate-800 focus:border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl placeholder-slate-800 outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         />
                         <button 
                           onClick={() => salvarLinkNoBanco(ensaio.id, 'link_materiais_auxiliares')} 
-                          disabled={salvandoId === ensaio.id}
-                          className="bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 border border-amber-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-50"
+                          disabled={salvandoId === ensaio.id || estaFinalizado}
+                          className="bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 border border-amber-500/20 text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0 disabled:opacity-20 disabled:pointer-events-none"
                         >
                           Salvar
                         </button>
