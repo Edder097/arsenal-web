@@ -304,6 +304,128 @@ useEffect(() => {
     );
   }
 
+  // ─── FUNÇÃO: gera e abre o relatório HTML individual de um membro ───
+  const gerarRelatorioMembro = (membro: MembroDashboard, nomeMes: string, ano: number) => {
+    const corPapel: Record<string, string> = {
+      'Filmmaker':        '#10b981',
+      'Roteirista':       '#38bdf8',
+      'Auxiliar Técnico': '#f59e0b',
+    };
+    const bgPapel: Record<string, string> = {
+      'Filmmaker':        '#052e16',
+      'Roteirista':       '#082f49',
+      'Auxiliar Técnico': '#1c1100',
+    };
+    const corStatus: Record<string, string> = {
+      'Concluído': '#a78bfa',
+      'Agendado':  '#60a5fa',
+      'Cancelado': '#f87171',
+    };
+
+    const trabalhoLinhas = membro.trabalhos.map((t, i) => `
+      <tr style="background:${i % 2 === 0 ? '#0f172a' : '#0d1526'}">
+        <td style="padding:10px 14px;color:#94a3b8;font-size:12px;font-weight:700;">#${t.id}</td>
+        <td style="padding:10px 14px;color:#e2e8f0;font-size:13px;font-weight:600;">${t.empresa_nome}</td>
+        <td style="padding:10px 14px;color:#94a3b8;font-size:12px;">${t.data_ensaio} · ${t.hora_inicio.substring(0, 5)}</td>
+        <td style="padding:10px 14px;">
+          <span style="background:${bgPapel[t.papel] ?? '#1e293b'};color:${corPapel[t.papel] ?? '#94a3b8'};border:1px solid ${corPapel[t.papel] ?? '#334155'}40;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">
+            ${t.papel}
+          </span>
+        </td>
+        <td style="padding:10px 14px;">
+          <span style="color:${corStatus[t.status] ?? '#94a3b8'};font-size:12px;font-weight:700;">${t.status}</span>
+        </td>
+      </tr>
+    `).join('');
+
+    const chips = [
+      membro.totais.filmmaker  > 0 ? `<span style="background:#052e16;color:#10b981;border:1px solid #10b98140;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">🎥 ${membro.totais.filmmaker}× Filmmaker</span>` : '',
+      membro.totais.roteirista > 0 ? `<span style="background:#082f49;color:#38bdf8;border:1px solid #38bdf840;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">📝 ${membro.totais.roteirista}× Roteirista</span>` : '',
+      membro.totais.auxiliar   > 0 ? `<span style="background:#1c1100;color:#f59e0b;border:1px solid #f59e0b40;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">⚡ ${membro.totais.auxiliar}× Auxiliar</span>` : '',
+    ].filter(Boolean).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Arsenal — ${membro.nome} — ${nomeMes} ${ano}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#020817;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:40px 32px;color:#e2e8f0;}
+    @media print{
+      .no-print{display:none!important;}
+      body{background:#020817!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="position:fixed;top:20px;right:24px;z-index:99;display:flex;gap:10px;">
+    <button onclick="window.print()" style="background:#fff;color:#0f172a;border:none;padding:10px 20px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 20px #0008;">
+      🖨️ Imprimir / Salvar PDF
+    </button>
+    <button onclick="window.close()" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:10px 16px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;">
+      ✕ Fechar
+    </button>
+  </div>
+
+  <div style="margin-bottom:32px;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div style="width:52px;height:52px;background:#1e293b;border:1px solid #334155;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#e2e8f0;">
+        ${membro.nome.charAt(0).toUpperCase()}
+      </div>
+      <div>
+        <h1 style="font-size:22px;font-weight:900;color:#f8fafc;letter-spacing:-0.5px;">${membro.nome}</h1>
+        <p style="font-size:12px;color:#64748b;margin-top:3px;">${membro.email} · Relatório de ${nomeMes} ${ano}</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px 18px;">
+        <p style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Total</p>
+        <p style="font-size:26px;font-weight:900;color:#f1f5f9;">${membro.totais.total}</p>
+      </div>
+      <div style="background:#0f172a;border:1px solid #a78bfa30;border-radius:12px;padding:14px 18px;">
+        <p style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Concluídos</p>
+        <p style="font-size:26px;font-weight:900;color:#a78bfa;">${membro.totais.concluidos}</p>
+      </div>
+      <div style="background:#0f172a;border:1px solid #60a5fa30;border-radius:12px;padding:14px 18px;">
+        <p style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Agendados</p>
+        <p style="font-size:26px;font-weight:900;color:#60a5fa;">${membro.totais.agendados}</p>
+      </div>
+      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px 18px;">
+        <p style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Funções</p>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;">${chips}</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;overflow:hidden;">
+    <div style="padding:16px 20px;border-bottom:1px solid #1e293b;">
+      <p style="font-size:11px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Trabalhos do mês</p>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#0a0f1a;">
+          <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">ID</th>
+          <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Empresa</th>
+          <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Data</th>
+          <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Papel</th>
+          <th style="padding:8px 14px;text-align:left;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Status</th>
+        </tr>
+      </thead>
+      <tbody>${trabalhoLinhas}</tbody>
+    </table>
+  </div>
+
+  <p style="text-align:center;font-size:11px;color:#1e293b;margin-top:32px;">Gerado em ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 antialiased font-sans">
       
