@@ -772,6 +772,19 @@ useEffect(() => {
                                   ⚡ {membro.totais.auxiliar}× Auxiliar
                                 </span>
                               )}
+
+                              {/* 🟢 O BOTÃO ENTRA EXATAMENTE AQUI 🟢 */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  gerarRelatorioMembro(membro, MESES_PT[mesAtivo.mes - 1], mesAtivo.ano);
+                                }}
+                                className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold px-3 py-1 rounded-lg border border-slate-600 transition-all ml-1 hover:shadow-lg active:scale-95"
+                                title={`Gerar PDF de ${membro.nome}`}
+                              >
+                                ↓ PDF Individual
+                              </button>
+
                               <span className={`text-slate-500 text-[10px] transition-transform duration-200 ml-1 ${expandido ? 'rotate-180' : ''}`}>▼</span>
                             </div>
                           </button>
