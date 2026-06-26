@@ -73,31 +73,45 @@ export default function FilmmakerPainel() {
     }
   };
 
-  const salvarEquipe = async (id: number) => {
-    try {
-      const valores = equipeEditando[id];
-      const fotografo = valores.fotografo;
-      const roteirista = valores.roteirista;
-      const auxiliar = valores.auxiliar;
+const salvarEquipe = async (id: number) => {
+  try {
+    const valores = equipeEditando[id];
 
-      await axios.patch(`${BASE_URL}/painel/ensaios/${id}/status`, {
-        fotografo_responsavel: fotografo,
-        roteirista_responsavel: roteirista,
-        auxiliar_responsavel: auxiliar
-      });
-      
-      alert('Equipe escalada com sucesso!');
-      
-      setEnsaios(prev => prev.map(e => e.id === id ? {
-        ...e,
-        fotografo_responsavel: fotografo,
-        roteirista_responsavel: roteirista,
-        auxiliar_responsavel: auxiliar
-      } : e));
-    } catch (error) {
-      alert('Erro ao salvar os responsáveis da equipe.');
-    }
-  };
+    // 🔍 Busca os dados completos de cada membro pelo nome
+    const fotografoData = equipe.find(m => m.nome === valores.fotografo);
+    const roteiristData = equipe.find(m => m.nome === valores.roteirista);
+    const auxiliarData  = equipe.find(m => m.nome === valores.auxiliar);
+
+    await axios.patch(`${BASE_URL}/painel/ensaios/${id}/status`, {
+      // — Fotógrafo —
+      fotografo_responsavel:         fotografoData?.nome     || valores.fotografo,
+      fotografo_responsavel_email:   fotografoData?.email    || null,
+      fotografo_responsavel_telefone: fotografoData?.telefone || null,
+
+      // — Roteirista —
+      roteirista_responsavel:         roteiristData?.nome     || valores.roteirista,
+      roteirista_responsavel_email:   roteiristData?.email    || null,
+      roteirista_responsavel_telefone: roteiristData?.telefone || null,
+
+      // — Auxiliar —
+      auxiliar_responsavel:         auxiliarData?.nome     || valores.auxiliar,
+      auxiliar_responsavel_email:   auxiliarData?.email    || null,
+      auxiliar_responsavel_telefone: auxiliarData?.telefone || null,
+    });
+
+    alert('Equipe escalada com sucesso!');
+
+    setEnsaios(prev => prev.map(e => e.id === id ? {
+      ...e,
+      fotografo_responsavel:  fotografoData?.nome  || valores.fotografo,
+      roteirista_responsavel: roteiristData?.nome  || valores.roteirista,
+      auxiliar_responsavel:   auxiliarData?.nome   || valores.auxiliar,
+    } : e));
+
+  } catch (error) {
+    alert('Erro ao salvar os responsáveis da equipe.');
+  }
+};
 
   const marcarComoConcluido = async (id: number) => {
     try {
